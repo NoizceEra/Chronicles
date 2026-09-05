@@ -1,6 +1,8 @@
 # player.gd
 extends CharacterBody2D
 
+const Shadow25D = preload("res://scripts/shadow_system_25d.gd")
+
 signal stats_changed(hp, max_hp, mp, max_mp, hero_idx, gold, level, xp)
 signal player_died
 
@@ -76,6 +78,7 @@ var invulnerable_timer: float = 0.0
 
 func _ready() -> void:
 	add_to_group("player")
+	Shadow25D.attach_to(self)
 	set_hero(0)
 	emit_stats()
 

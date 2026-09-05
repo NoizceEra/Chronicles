@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>2.5D Asset Pack — Chronicles of Midgard</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0a0f1e;color:#e2e8f0;font-family:system-ui,Segoe UI,sans-serif;padding:24px}
+  h1{font-size:22px;color:#fbbf24;letter-spacing:.04em}
+  .sub{color:#94a3b8;font-size:13px;margin:4px 0 18px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
+  .card{background:#111a2e;border:1px solid #1e3a5f;border-radius:10px;padding:12px;text-align:center}
+  .card img{image-rendering:pixelated;width:96px;height:auto;margin:6px auto;display:block;filter:drop-shadow(0 4px 8px rgba(0,0,0,.6))}
+  .card .tall img{width:64px}
+  .label{font-size:12px;color:#38bdf8;margin-top:6px}
+  .meta{font-size:10px;color:#64748b}
+  .section{margin:22px 0 10px;padding:8px 12px;background:#0f1d2f;border-left:3px solid #38bdf8;border-radius:6px}
+  .section h2{font-size:14px;color:#7dd3fc}
+  .illus{display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap;padding:12px;background:#0b1220;border:1px dashed #1e3a5f;border-radius:10px;margin:10px 0}
+  .illus img{image-rendering:pixelated;border:1px solid #1e293b;background:#060a14}
+  .badge{display:inline-block;font-size:10px;padding:2px 7px;border-radius:99px;background:#1e3a5f;color:#7dd3fc;margin-left:8px}
+  code{color:#fbbf24}
+</style>
+</head>
+<body>
+<h1>Chronicles of Midgard — 2.5D Upgrade Pack <span class="badge">GENERATED</span></h1>
+<div class="sub">32 px top-down → pseudo-3D (YSort + wall extrusion + cliff faces + drop shadows + height props). All PIL-generated, same palette as base tileset. Generated via <code>scripts/generate_assets_25d.py</code> · 17 files · 256×48 / 32×48 / 32×32 / 14×5</div>
+
+<div class="section"><h2>Wall 2.5D — 32×48 slices (32 top + 16 side extrusion)</h2></div>
+<div class="illus">
+  <div><img src="../assets/tiles/25d/wall_stone_25d.png" style="width:96px"><div class="label">stone</div></div>
+  <div><img src="../assets/tiles/25d/wall_brick_25d.png" style="width:96px"><div class="label">brick</div></div>
+  <div><img src="../assets/tiles/25d/wall_dungeon_25d.png" style="width:96px"><div class="label">dungeon steel</div></div>
+  <div><img src="../assets/tiles/25d/wall_mossy_25d.png" style="width:96px"><div class="label">mossy</div></div>
+  <div><img src="../assets/tiles/25d/wall_atlas_25d.png" style="width:256px"><div class="label">atlas 256×48 (4 variants)</div></div>
+</div>
+<p style="font-size:12px;color:#94a3b8">Top face has bevel hilight + brick mortar; south face is 48% darkened with vertical block seams + bottom-edge shadow strip. Godot: draw top Sprite2D at y, side Sprite2D at y+16 (no collider height), or single 32×48 sprite bottom-anchored. z_index = foot_y(=y+16).</p>
+
+<div class="section"><h2>Cliff / Ledge — grass / dirt / stone (top 32×32 + face 32×16)</h2></div>
+<div class="grid">
+  <div class="card">
+    <img src="../assets/tiles/25d/cliff_grass_cliff_top.png" style="width:96px">
+    <div class="label">grass top</div><div class="meta">32×32 — tufts + pebbles</div>
+    <img src="../assets/tiles/25d/cliff_grass_cliff_face.png" style="width:96px;margin-top:4px">
+    <div class="meta">face 32×16 — strata</div>
+  </div>
+  <div class="card">
+    <img src="../assets/tiles/25d/cliff_dirt_cliff_top.png" style="width:96px">
+    <div class="label">dirt top</div>
+    <img src="../assets/tiles/25d/cliff_dirt_cliff_face.png" style="width:96px;margin-top:4px">
+    <div class="meta">face</div>
+  </div>
+  <div class="card">
+    <img src="../assets/tiles/25d/cliff_stone_cliff_top.png" style="width:96px">
+    <div class="label">stone top</div>
+    <img src="../assets/tiles/25d/cliff_stone_cliff_face.png" style="width:96px;margin-top:4px">
+    <div class="meta">face</div>
+  </div>
+  <div class="card"><img src="../assets/tiles/25d/cliff_atlas_25d.png" style="width:128px"><div class="label">cliff atlas 128×48</div><div class="meta">3× combined 32×48</div></div>
+</div>
+
+<div class="section"><h2>Shadows — foot-anchored ellipses</h2></div>
+<div class="illus">
+  <div><img src="../assets/sprites/shadow_14x5.png" style="width:56px"><div class="label">14×5</div><div class="meta">single oval</div></div>
+  <div><img src="../assets/sprites/shadow_20x8.png" style="width:80px"><div class="label">20×8</div><div class="meta">large mob</div></div>
+  <div><img src="../assets/sprites/shadow_32x32.png" style="width:96px"><div class="label">32×32 sheet</div><div class="meta">centered at y+12</div></div>
+</div>
+<p style="font-size:12px;color:#94a3b8">Dark ellipse 75–90 alpha. Attach as child Sprite2D at Vector2(0,12). ShadowSystem25D scales with height: <code>scale = clamp(height_factor,0.4,1.0)</code>.</p>
+
+<div class="section"><h2>Height Props — YSort foreground (bottom-anchored, shadow baked)</h2></div>
+<div class="grid">
+  <div class="card tall"><img src="../assets/sprites/prop_crate_25d.png" style="height:96px;width:auto"><div class="label">crate</div><div class="meta">32×40 — south face + shadow</div></div>
+  <div class="card tall"><img src="../assets/sprites/prop_crate_metal_25d.png" style="height:96px;width:auto"><div class="label">crate_metal</div><div class="meta">32×40</div></div>
+  <div class="card tall"><img src="../assets/sprites/prop_column_25d.png" style="height:112px;width:auto"><div class="label">column</div><div class="meta">32×48 — base+capital</div></div>
+  <div class="card tall"><img src="../assets/sprites/prop_stump_25d.png" style="height:96px;width:auto"><div class="label">stump</div><div class="meta">32×40 — forest</div></div>
+  <div class="card tall"><img src="../assets/sprites/prop_bush_large_25d.png" style="height:96px;width:auto"><div class="label">bush_large</div><div class="meta">32×32 — foliage</div></div>
+  <div class="card"><img src="../assets/tiles/25d/props_atlas_25d.png" style="width:160px"><div class="label">props atlas 160×48</div></div>
+</div>
+
+<div class="section"><h2>How to wire it in Godot 4</h2></div>
+<pre style="background:#0b1220;border:1px solid #1e293b;border-radius:8px;padding:12px;font-size:11px;line-height:1.55;color:#cbd5e1;overflow:auto"># 1. World YSort (one line in World root, or use WorldBuilder25D.build_25d_world):
+y_sort_enabled = true   # Node2D property, or wrap entities in a YSort node
+#    In world_builder_25d.gd:  _enable_ysort(parent) sets it automatically.
+
+# 2. Wall with height — use 2 sprites (cheap, colliders stay 32×32):
+#    Sprite2D top  at y            (z = y + 16)
+#    Sprite2D side at y + 16       (z = y + 16)  ← darkened south face
+#    StaticBody2D/CollisionShape2D at y (Rectangle 32×32)
+
+# 3. Drop shadow on any mover:
+ShadowSystem25D.attach_shadow(player)    # -> child Sprite2D at (0,12)
+ShadowSystem25D.attach_shadow(enemy)
+#    Updates scale automatically with jump height.
+
+# 4. Depth ordering fallback (when not inside YSort):
+Depth25D.update_sprite_sort(player)     # z_index = int(y + 12)
+Depth25D.update_sprite_sort(wall)       # z_index = int(y + 16)
+
+# 5. Camera fake perspective:
+#    Replace Camera2D script with scripts/camera_25d.gd (tracks player, offset y*0.06)
+
+# 6. Shaders (optional):
+#    World ground  -> shaders/height_fog.gdshader  (fog = y / MAP_H)
+#    Characters    -> shaders/sprite_depth.gdshader (height uniform + outline)
+</pre>
+
+<p style="margin-top:14px;font-size:11px;color:#64748b">All files live in <code>assets/tiles/25d/</code>, <code>assets/sprites/prop_*_25d.png</code>, <code>assets/sprites/shadow_*.png</code>, <code>scripts/*25d.gd</code>, <code>shaders/*.gdshader</code>. Original 256×256 tilesets + 128×128 spritesheets untouched — 2.5D assets are additive.</p>
+</body>
+</html>

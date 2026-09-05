@@ -1,6 +1,8 @@
 # enemy.gd
 extends CharacterBody2D
 
+const Shadow25D = preload("res://scripts/shadow_system_25d.gd")
+
 enum State { IDLE, WANDER, CHASE, ATTACK, HURT, DEAD }
 
 @export var enemy_type: String = "slime_green"
@@ -23,6 +25,7 @@ var attack_cooldown: float = 0.0
 
 func _ready() -> void:
 	add_to_group("enemies")
+	Shadow25D.attach_to(self)
 	hp = max_hp
 	load_type_settings()
 	state_timer = randf_range(1.0, 3.0)
