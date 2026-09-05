@@ -33,21 +33,25 @@ func build_world_map() -> void:
 			atlas.atlas = tile_tex
 			
 			# Overworld vs Dungeon zone
+			# NOTE: tileset.png's top row (y=0) is one-off decorative PROPS, not tileable
+			# ground textures (a lamp-post cap, a rune orb, a gem painting, a door...).
+			# The actual repeating ground tiles live at y=64/96 (light plaza) and
+			# y=64/96 cols 4-7 (grass) and y=192/224 (dungeon floor). See ROADMAP.md.
 			if x > 25 and y > 15:
-				# Dungeon Zone (Stone)
-				atlas.region = Rect2(96, 0, 32, 32)
+				# Dungeon Zone (Stone floor, dark repeating tile)
+				atlas.region = Rect2(0, 224, 32, 32)
 			elif (x < 10 and y < 10) or (x >= 20 and x <= 25 and y >= 5 and y <= 10):
-				# Water Pond
-				atlas.region = Rect2(160, 0, 32, 32)
+				# Water Pond (actual water/ripple tile)
+				atlas.region = Rect2(192, 0, 32, 32)
 			elif (x + y) % 9 == 0:
-				# Flower grass
-				atlas.region = Rect2(32, 0, 32, 32)
+				# Flower grass (grass-with-dots variant)
+				atlas.region = Rect2(224, 64, 32, 32)
 			elif x % 7 == 0 or y % 8 == 0:
-				# Dirt path
-				atlas.region = Rect2(64, 0, 32, 32)
+				# Dirt path (light plaza/stone path tile)
+				atlas.region = Rect2(0, 64, 32, 32)
 			else:
-				# Plain grass
-				atlas.region = Rect2(0, 0, 32, 32)
+				# Plain grass (repeating grass-with-dots tile)
+				atlas.region = Rect2(128, 64, 32, 32)
 
 			tile_sprite.texture = atlas
 			tile_sprite.position = Vector2(x * 32 + 16, y * 32 + 16)
@@ -93,7 +97,8 @@ func create_wall_block(pos: Vector2, tile_tex: Texture2D) -> void:
 	var spr = Sprite2D.new()
 	var atlas = AtlasTexture.new()
 	atlas.atlas = tile_tex
-	atlas.region = Rect2(128, 0, 32, 32)
+	# Iron grate/fence tile (was wrongly a grass patch, so solid walls looked walkable)
+	atlas.region = Rect2(64, 128, 32, 32)
 	spr.texture = atlas
 	body.add_child(spr)
 
@@ -111,7 +116,8 @@ func create_tree_obstacle(pos: Vector2, tile_tex: Texture2D) -> void:
 	var spr = Sprite2D.new()
 	var atlas = AtlasTexture.new()
 	atlas.atlas = tile_tex
-	atlas.region = Rect2(192, 0, 32, 32)
+	# Round bush/tree canopy sprite (was wrongly the water ripple tile)
+	atlas.region = Rect2(128, 32, 32, 32)
 	spr.texture = atlas
 	body.add_child(spr)
 
