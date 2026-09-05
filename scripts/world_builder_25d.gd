@@ -143,12 +143,169 @@ static func create_wall_25d(parent: Node2D, pos: Vector2, tile_tex: Texture2D) -
 
 # ----------------------------------------------------------------
 # Raised platforms - 2 tiles high (32px) with cliff side on south edge
-# Two platforms: overworld plaza and dungeon dais
+# Two rectangular + one L-shaped to showcase inner-corner mitering
 static func _build_raised_platforms(parent: Node2D, tile_tex: Texture2D) -> void:
-	# Platform A: overworld high ground (6x4) near (10,6)
+	# Platform A: overworld high ground (6x4) near (8,6) — grass
 	_create_platform_rect(parent, Rect2i(8, 6, 6, 4), tile_tex, Rect2(0, 96, 32, 32))
-	# Platform B: dungeon overlook (8x5) inside dungeon near (35,22)
+	# Platform B: dungeon overlook (8x5) inside dungeon near (35,22) — stone
 	_create_platform_rect(parent, Rect2i(35, 22, 8, 5), tile_tex, Rect2(0, 224, 32, 32))
+	# Platform C: L-shaped ridge at (18,14) — demos outer SW/SE + inner NW notch
+	# Shape:
+	#   ###.
+	#   #...
+	#   #...
+	#   #...
+	var cells_l: Array[Vector2i] = []
+	for x in range(18, 21): cells_l.append(Vector2i(x, 14))
+	for y in range(15, 19): cells_l.append(Vector2i(18, y))
+	_create_platform_from_cells(parent, cells_l, tile_tex, Rect2(0, 96, 32, 32), "grass")
+
+# Corner-aware builder: each cell inspects its 4-neighbor mask and picks miters/edges
+static func _create_platform_from_cells(parent: Node2D, cells: Array[Vector2i], tile_tex: Texture2D, top_region: Rect2, kind: String) -> void:
+	var cell_set: Dictionary = {}
+	for c in cells: cell_set[c] = true
+	var has: Callable = func(p: Vector2i) -> bool: return cell_set.has(p)
+	for c in cells:
+		var x: int = c.x
+		var y: int = c.y
+		var pos := Vector2(x * TILE + 16, y * TILE + 16)
+		var has_n: bool = has.call(Vector2i(x, y - 1))
+		var has_s: bool = has.call(Vector2i(x, y + 1))
+		var has_e: bool = has.call(Vector2i(x + 1, y))
+		var has_w: bool = has.call(Vector2i(x - 1, y))
+		var has_se: bool = has.call(Vector2i(x + 1, y + 1))
+		var has_sw: bool = has.call(Vector2i(x - 1, y + 1))
+		var has_ne: bool = has.call(Vector2i(x + 1, y - 1))
+		var has_nw: bool = has.call(Vector2i(x - 1, y - 1))
+		var cell := Node2D.new()
+		cell.position = pos
+		cell.add_to_group("ysort")
+		cell.add_to_group("platform_25d")
+		# Pick corner/edge sprite + its anchor offset, else fall back to per-edge logic.
+		# 48x48 corners -> (8,8); 48x32 east edge -> (8,0); west edge -> (-8,0);
+		# 32x48 south slice -> (0,8). Each lands its top exactly on the tile.
+		var pick: Array = _corner_pick_for_mask(kind, has_n, has_s, has_e, has_w, has_se, has_sw, has_ne, has_nw)
+		var corner_tex: Texture2D = pick[0]
+		if corner_tex != null:
+			var cspr := Sprite2D.new()
+			cspr.texture = corner_tex
+			cspr.position = pick[1]
+			cell.add_child(cspr)
+		else:
+			# Fall back to legacy per-edge rendering (extruded south / flat + east caps)
+			var floor_sheet: Texture2D = load("res://assets/tiles/floor_height_25d.png")
+			var grass2: bool = top_region == Rect2(0, 96, 32, 32)
+			if floor_sheet != null:
+				var is_edge_south2: bool = not has_s
+				if is_edge_south2:
+					var scol: int = x % 4
+					var sbase_y: int = 48 if grass2 else 144
+					var edge_spr := Sprite2D.new()
+					var edge_atlas := AtlasTexture.new()
+					edge_atlas.atlas = floor_sheet
+					edge_atlas.region = Rect2(scol * 32, sbase_y, 32, 48)
+					edge_spr.texture = edge_atlas
+					edge_spr.position = Vector2(0, 8)
+					cell.add_child(edge_spr)
+				else:
+					var fbase_y2: int = 0 if grass2 else 96
+					var fcol2: int = (x + y) % 6 if grass2 else (x + y) % 8
+					var top_spr2 := Sprite2D.new()
+					var top_atlas2 := AtlasTexture.new()
+					top_atlas2.atlas = floor_sheet
+					top_atlas2.region = Rect2(fcol2 * 32, fbase_y2, 32, 32)
+					top_spr2.texture = top_atlas2
+					cell.add_child(top_spr2)
+					if not has_e or not has_w:
+						var cap := Sprite2D.new()
+						var cap_atlas := AtlasTexture.new()
+						cap_atlas.atlas = tile_tex
+						cap_atlas.region = Rect2(64, 128, 8, 32)
+						cap.texture = cap_atlas
+						var east2: bool = not has_e
+						cap.position = Vector2(12, 8) if east2 else Vector2(-12, 8)
+						cap.modulate = Color(0.35, 0.30, 0.26, 1.0) if east2 else Color(0.50, 0.44, 0.38, 1.0)
+						cap.z_index = -1
+						cell.add_child(cap)
+			else:
+				var top_spr3 := Sprite2D.new()
+				var top_atlas3 := AtlasTexture.new()
+				top_atlas3.atlas = tile_tex
+				top_atlas3.region = top_region
+				top_spr3.texture = top_atlas3
+				top_spr3.modulate = Color(1.05, 1.05, 1.05, 1.0)
+				cell.add_child(top_spr3)
+		parent.add_child(cell)
+		# Collision at cliff foot / perimeter (same as rect version)
+		var is_perim: bool = not has_n or not has_s or not has_e or not has_w
+		if not has_s:
+			var blocker := StaticBody2D.new()
+			blocker.position = pos + Vector2(0, 16)
+			blocker.add_to_group("ysort")
+			var col := CollisionShape2D.new()
+			var shape := RectangleShape2D.new()
+			shape.size = Vector2(32, 12)
+			col.shape = shape
+			blocker.add_child(col)
+			parent.add_child(blocker)
+		elif is_perim and (not has_e or not has_w or not has_n):
+			var side_blocker := StaticBody2D.new()
+			side_blocker.position = pos
+			side_blocker.add_to_group("ysort")
+			var scol2 := CollisionShape2D.new()
+			var sshape2 := RectangleShape2D.new()
+			if not has_n:
+				sshape2.size = Vector2(32, 6)
+				scol2.position = Vector2(0, -13)
+			elif not has_e:
+				sshape2.size = Vector2(6, 32)
+				scol2.position = Vector2(13, 0)
+			else:
+				sshape2.size = Vector2(6, 32)
+				scol2.position = Vector2(-13, 0)
+			scol2.shape = sshape2
+			side_blocker.add_child(scol2)
+			parent.add_child(side_blocker)
+
+static func _corner_pick_for_mask(kind: String, has_n: bool, has_s: bool, has_e: bool, has_w: bool, has_se: bool, has_sw: bool, has_ne: bool, has_nw: bool) -> Array:
+	# Returns [Texture2D or null, Vector2 anchor]. Priority: inner (concave) before outer (convex).
+	# Inner NW: has S && has E && !SE
+	if has_s and has_e and not has_se:
+		return [_load_tex("cliff_corner_inner_NW_%s_v2" % kind), Vector2(8, 8)]
+	if has_s and has_w and not has_sw:
+		return [_load_tex("cliff_corner_inner_NE_%s_v2" % kind), Vector2(8, 8)]
+	if has_n and has_e and not has_ne:
+		return [_load_tex("cliff_corner_inner_SW_%s_v2" % kind), Vector2(8, 8)]
+	if has_n and has_w and not has_nw:
+		return [_load_tex("cliff_corner_inner_SE_%s_v2" % kind), Vector2(8, 8)]
+	# Outer corners (48x48)
+	if not has_s and not has_e:
+		return [_load_tex("cliff_corner_outer_SE_%s_v2" % kind), Vector2(8, 8)]
+	if not has_s and not has_w:
+		return [_load_tex("cliff_corner_outer_SW_%s_v2" % kind), Vector2(8, 8)]
+	if not has_n and not has_e:
+		return [_load_tex("cliff_corner_outer_NE_%s_v2" % kind), Vector2(8, 8)]
+	if not has_n and not has_w:
+		return [_load_tex("cliff_corner_outer_NW_%s_v2" % kind), Vector2(8, 8)]
+	# Straight edges: south 32x48 slice, east/west 48x32 strips
+	if not has_s:
+		return [_load_tex("cliff_%s_cliff_25d" % kind), Vector2(0, 8)]
+	if not has_e:
+		return [_load_tex("cliff_edge_e_%s_v2" % kind), Vector2(8, 0)]
+	if not has_w:
+		return [_load_tex("cliff_edge_w_%s_v2" % kind), Vector2(-8, 0)]
+	return [null, Vector2.ZERO]
+
+static func _load_tex(stem: String) -> Texture2D:
+	var paths: Array[String] = [
+		"res://assets/tiles/25d_v2/%s.png" % stem,
+		"res://assets/tiles/25d/%s.png" % stem,
+	]
+	for p in paths:
+		if ResourceLoader.exists(p):
+			var t = load(p)
+			if t: return t
+	return null
 
 static func _create_platform_rect(parent: Node2D, rect: Rect2i, tile_tex: Texture2D, top_region: Rect2) -> void:
 	# Create each tile of the platform top
@@ -291,38 +448,81 @@ static func _create_platform_rect(parent: Node2D, rect: Rect2i, tile_tex: Textur
 
 # ----------------------------------------------------------------
 # Stair tiles - connect platform to ground, no collider (walkable ramp)
+# Tries to load hand-painted stair tiles from 25d_v2; falls back to plaza-tint if missing
 static func _build_stairs(parent: Node2D, tile_tex: Texture2D) -> void:
 	# Stairs for Platform A (south center)
 	var stair_a: Array[Vector2i] = [Vector2i(10, 10), Vector2i(11, 10)]
 	# Stairs for Platform B (west side)
 	var stair_b: Array[Vector2i] = [Vector2i(34, 24), Vector2i(34, 25)]
-	for p in stair_a + stair_b:
-		create_stair_tile(parent, Vector2(p.x * TILE + 16, p.y * TILE + 16), tile_tex)
+	for p in stair_a:
+		_create_stair_tile_south(parent, Vector2(p.x * TILE + 16, p.y * TILE + 16), "grass")
+	for p in stair_b:
+		_create_stair_tile_east(parent, Vector2(p.x * TILE + 16, p.y * TILE + 16), "stone")
 
-static func create_stair_tile(parent: Node2D, pos: Vector2, tile_tex: Texture2D) -> Node2D:
+static func _stair_tex(kind: String, dir: String) -> Texture2D:
+	var paths: Array[String] = [
+		"res://assets/tiles/25d_v2/stair_%s_%s_v2.png" % [dir, kind],
+		"res://assets/tiles/25d/stair_%s_%s_v2.png" % [dir, kind],
+	]
+	for pp in paths:
+		if ResourceLoader.exists(pp):
+			var t = load(pp)
+			if t: return t
+	return null
+
+static func _create_stair_tile_south(parent: Node2D, pos: Vector2, kind: String) -> Node2D:
 	var n := Node2D.new()
 	n.position = pos
 	n.add_to_group("stairs_25d")
-	# Stair sprite - use plaza tile with slight color shift to read as steps
-	var spr := Sprite2D.new()
-	var atlas := AtlasTexture.new()
-	atlas.atlas = tile_tex
-	atlas.region = Rect2(0, 64, 32, 32) # light plaza tile
-	spr.texture = atlas
-	spr.modulate = Color(0.92, 0.88, 0.80, 1.0)
-	n.add_child(spr)
-	# Step lines overlay - two darkened thin sprites to suggest steps
-	for i in range(2):
-		var step := Sprite2D.new()
-		var step_atlas := AtlasTexture.new()
-		step_atlas.atlas = tile_tex
-		step_atlas.region = Rect2(0, 64, 32, 4)
-		step.texture = step_atlas
-		step.position = Vector2(0, -8 + i * 8)
-		step.modulate = Color(0.55, 0.50, 0.44, 1.0)
-		n.add_child(step)
+	var t := _stair_tex(kind, "south")
+	if t:
+		var spr := Sprite2D.new()
+		spr.texture = t
+		n.add_child(spr)
+	else:
+		# fallback: tinted plaza + step lines (legacy)
+		var spr := Sprite2D.new()
+		var atlas := AtlasTexture.new()
+		atlas.atlas = load("res://assets/tiles/tileset.png")
+		atlas.region = Rect2(0, 64, 32, 32)
+		spr.texture = atlas
+		spr.modulate = Color(0.92, 0.88, 0.80, 1.0)
+		n.add_child(spr)
+		for i in range(2):
+			var step := Sprite2D.new()
+			var step_atlas := AtlasTexture.new()
+			step_atlas.atlas = load("res://assets/tiles/tileset.png")
+			step_atlas.region = Rect2(0, 64, 32, 4)
+			step.texture = step_atlas
+			step.position = Vector2(0, -8 + i * 8)
+			step.modulate = Color(0.55, 0.50, 0.44, 1.0)
+			n.add_child(step)
 	parent.add_child(n)
 	return n
+
+static func _create_stair_tile_east(parent: Node2D, pos: Vector2, kind: String) -> Node2D:
+	var n := Node2D.new()
+	n.position = pos
+	n.add_to_group("stairs_25d")
+	var t := _stair_tex(kind, "east")
+	if t:
+		var spr := Sprite2D.new()
+		spr.texture = t
+		n.add_child(spr)
+	else:
+		var spr := Sprite2D.new()
+		var atlas := AtlasTexture.new()
+		atlas.atlas = load("res://assets/tiles/tileset.png")
+		atlas.region = Rect2(0, 64, 32, 32)
+		spr.texture = atlas
+		spr.modulate = Color(0.92, 0.88, 0.80, 1.0)
+		n.add_child(spr)
+	parent.add_child(n)
+	return n
+
+static func create_stair_tile(parent: Node2D, pos: Vector2, tile_tex: Texture2D) -> Node2D:
+	# Legacy wrapper — still uses tile_tex atlas but now prefers v2 file
+	return _create_stair_tile_south(parent, pos, "grass")
 
 # ----------------------------------------------------------------
 # Boundary trees - same as world.gd outer ring but with YSort grouping
@@ -419,6 +619,72 @@ static func _build_props_25d(parent: Node2D, tile_tex: Texture2D) -> void:
 	for pos in column_positions:
 		create_column_25d(parent, pos, tile_tex)
 
+	# Stumps + barrels - individual v2 art, foot-anchored colliders
+	create_stump_25d(parent, Vector2(600, 420))
+	create_stump_25d(parent, Vector2(180, 760))
+	create_barrel_25d(parent, Vector2(450, 330))
+	create_barrel_25d(parent, Vector2(1000, 560))
+
+	# Bushes - non-colliding decor tufts
+	for pos in [Vector2(250, 300), Vector2(550, 450), Vector2(130, 750), Vector2(1150, 800)]:
+		create_bush_25d(parent, pos)
+
+# Individual v2 prop files live in sprites/25d_v2/, flat sprites/ name as fallback.
+static func _prop_tex(v2_stem: String, flat_name: String) -> Texture2D:
+	var paths: Array[String] = [
+		"res://assets/sprites/25d_v2/%s.png" % v2_stem,
+		"res://assets/sprites/%s.png" % flat_name,
+	]
+	for p in paths:
+		if ResourceLoader.exists(p):
+			var t = load(p)
+			if t:
+				return t
+	return null
+
+# Small v2 prop (stump/barrel): individual 32x40 file, foot-anchored collider.
+static func _create_small_prop(parent: Node2D, pos: Vector2, v2_stem: String, flat_name: String, col_size: Vector2) -> StaticBody2D:
+	var tex: Texture2D = _prop_tex(v2_stem, flat_name)
+	if tex == null:
+		return null
+	var body := StaticBody2D.new()
+	body.position = pos
+	body.add_to_group("ysort")
+	body.add_to_group("props_25d")
+	var spr := Sprite2D.new()
+	spr.texture = tex
+	spr.position = Vector2(0, -6) # 40px art: bottom lands on the foot
+	body.add_child(spr)
+	var col := CollisionShape2D.new()
+	var shape := RectangleShape2D.new()
+	shape.size = col_size
+	col.shape = shape
+	col.position = Vector2(0, 8)
+	body.add_child(col)
+	parent.add_child(body)
+	return body
+
+static func create_stump_25d(parent: Node2D, pos: Vector2) -> StaticBody2D:
+	return _create_small_prop(parent, pos, "prop_stump_v2", "prop_stump_25d", Vector2(20, 12))
+
+static func create_barrel_25d(parent: Node2D, pos: Vector2) -> StaticBody2D:
+	return _create_small_prop(parent, pos, "prop_barrel_v2", "prop_barrel_25d", Vector2(18, 12))
+
+# Bush: non-colliding decor tuft.
+static func create_bush_25d(parent: Node2D, pos: Vector2) -> Node2D:
+	var tex: Texture2D = _prop_tex("prop_bush_v2", "prop_bush_large_25d")
+	if tex == null:
+		return null
+	var n := Node2D.new()
+	n.position = pos
+	n.add_to_group("ysort")
+	n.add_to_group("decor_25d")
+	var spr := Sprite2D.new()
+	spr.texture = tex
+	n.add_child(spr)
+	parent.add_child(n)
+	return n
+
 # Crate: 32x48 prop art with baked side, collision 18x12 rect at foot
 static func create_crate_25d(parent: Node2D, pos: Vector2, tile_tex: Texture2D) -> StaticBody2D:
 	var body := StaticBody2D.new()
@@ -426,12 +692,23 @@ static func create_crate_25d(parent: Node2D, pos: Vector2, tile_tex: Texture2D) 
 	body.add_to_group("ysort")
 	body.add_to_group("props_25d")
 
-	# Improved art: props_25d.png crate cells (row 0, cols 4-7 variants).
-	# Crate variant picked from position so neighbours differ.
-	var prop_sheet: Texture2D = load("res://assets/tiles/props_25d.png")
-	if prop_sheet == null:
-		prop_sheet = load("res://assets/sprites/props_25d.png")
-	if prop_sheet != null:
+	# Improved art: individual v2 crate files (32x40, baked side); wood/metal
+	# picked by position. Falls back to the props atlas, then base tiles.
+	var metal: bool = (abs(int(pos.x / TILE) + int(pos.y / TILE)) % 3 == 0)
+	var cstem: String = "prop_crate_metal_v2" if metal else "prop_crate_v2"
+	var cflat: String = "prop_crate_metal_25d" if metal else "prop_crate_25d"
+	var ctex: Texture2D = _prop_tex(cstem, cflat)
+	var prop_sheet: Texture2D = null
+	if ctex == null:
+		prop_sheet = load("res://assets/tiles/props_25d.png")
+		if prop_sheet == null:
+			prop_sheet = load("res://assets/sprites/props_25d.png")
+	if ctex != null:
+		var spr := Sprite2D.new()
+		spr.texture = ctex
+		spr.position = Vector2(0, -6) # 40px art: bottom lands on the foot
+		body.add_child(spr)
+	elif prop_sheet != null:
 		var ccol: int = 4 + (abs(int(pos.x / TILE) + int(pos.y / TILE)) % 4)
 		var spr := Sprite2D.new()
 		var atlas := AtlasTexture.new()
@@ -479,11 +756,20 @@ static func create_column_25d(parent: Node2D, pos: Vector2, tile_tex: Texture2D)
 	body.add_to_group("ysort")
 	body.add_to_group("props_25d")
 
-	# Improved art: props_25d.png doric column (row 0, col 2).
-	var prop_sheet: Texture2D = load("res://assets/tiles/props_25d.png")
-	if prop_sheet == null:
-		prop_sheet = load("res://assets/sprites/props_25d.png")
-	if prop_sheet != null:
+	# Improved art: individual v2 column file (32x48, baked plinth).
+	# Falls back to the props atlas, then shaded base tiles.
+	var xtex: Texture2D = _prop_tex("prop_column_v2", "prop_column_25d")
+	var prop_sheet: Texture2D = null
+	if xtex == null:
+		prop_sheet = load("res://assets/tiles/props_25d.png")
+		if prop_sheet == null:
+			prop_sheet = load("res://assets/sprites/props_25d.png")
+	if xtex != null:
+		var spr := Sprite2D.new()
+		spr.texture = xtex
+		spr.position = Vector2(0, -8) # 48px art: plinth lands on the foot
+		body.add_child(spr)
+	elif prop_sheet != null:
 		var spr := Sprite2D.new()
 		var atlas := AtlasTexture.new()
 		atlas.atlas = prop_sheet

@@ -107,7 +107,22 @@ func _ensure_shadow() -> void:
 	_shadow_sprite.name = "DropShadow"
 	_shadow_sprite.centered = true
 	_shadow_sprite.position = SHADOW_OFFSET
-	_shadow_sprite.texture = _create_ellipse_texture(int(SHADOW_SIZE.x), int(SHADOW_SIZE.y))
+	# Prefer hand-painted soft kernel if available (v3), else procedural fallback
+	var soft_paths: Array[String] = [
+		"res://assets/sprites/shadow_soft_20x8.png",
+		"res://assets/sprites/25d_v2/shadow_soft_20x8.png",
+		"res://assets/sprites/shadow_soft_14x5.png",
+	]
+	var loaded: bool = false
+	for p in soft_paths:
+		if ResourceLoader.exists(p):
+			var tex = load(p)
+			if tex:
+				_shadow_sprite.texture = tex
+				loaded = true
+				break
+	if not loaded:
+		_shadow_sprite.texture = _create_ellipse_texture(int(SHADOW_SIZE.x), int(SHADOW_SIZE.y))
 	_shadow_sprite.modulate = SHADOW_COLOR
 	_shadow_sprite.z_index = -1
 	_shadow_sprite.visible = shadow_enabled
