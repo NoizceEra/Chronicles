@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2D RPG Character Sprite Viewer</title>
+<style>
+  body {
+    background: #0f172a;
+    color: #f8fafc;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    margin: 0;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  h1 { margin-bottom: 4px; color: #38bdf8; }
+  p.subtitle { color: #94a3b8; margin-top: 0; margin-bottom: 24px; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    max-width: 1200px;
+    width: 100%;
+  }
+  .card {
+    background: #1e293b;
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border: 1px solid #334155;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  }
+  .card h3 { margin: 8px 0; font-size: 1.1rem; }
+  .preview-box {
+    background: #090d16;
+    background-image: linear-gradient(45deg, #131b2e 25%, transparent 25%), 
+                      linear-gradient(-45deg, #131b2e 25%, transparent 25%), 
+                      linear-gradient(45deg, transparent 75%, #131b2e 75%), 
+                      linear-gradient(-45deg, transparent 75%, #131b2e 75%);
+    background-size: 16px 16px;
+    background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 12px;
+  }
+  .preview-box img {
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    width: 128px;
+    height: 128px;
+    display: block;
+  }
+  .sheet-img {
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    width: 192px;
+    height: 192px;
+    border: 1px solid #475569;
+    border-radius: 4px;
+    background: #020617;
+  }
+  .badge {
+    font-size: 0.75rem;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    background: #0284c7;
+    color: white;
+    font-weight: bold;
+    margin-bottom: 8px;
+  }
+</style>
+</head>
+<body>
+  <h1>2D Classic RPG Sprite Roster</h1>
+  <p class="subtitle">32×32 Pixel Art | 4-Direction Walk Cycles | Godot 4 Ready</p>
+
+  <div class="grid">
+    <div class="card">
+      <span class="badge">Hero Class</span>
+      <h3>Knight / Paladin</h3>
+      <div class="preview-box">
+        <img src="knight_walk_preview.gif" alt="Knight Animation">
+      </div>
+      <img class="sheet-img" src="knight.png" alt="Knight Sheet">
+    </div>
+
+    <div class="card">
+      <span class="badge">Hero Class</span>
+      <h3>Mage / Arch-Wizard</h3>
+      <div class="preview-box">
+        <img src="mage_walk_preview.gif" alt="Mage Animation">
+      </div>
+      <img class="sheet-img" src="mage.png" alt="Mage Sheet">
+    </div>
+
+    <div class="card">
+      <span class="badge">Hero Class</span>
+      <h3>Rogue / Shadow Blade</h3>
+      <div class="preview-box">
+        <img src="rogue_walk_preview.gif" alt="Rogue Animation">
+      </div>
+      <img class="sheet-img" src="rogue.png" alt="Rogue Sheet">
+    </div>
+
+    <div class="card">
+      <span class="badge">Hero Class</span>
+      <h3>Cleric / High Priest</h3>
+      <div class="preview-box">
+        <img src="cleric_walk_preview.gif" alt="Cleric Animation">
+      </div>
+      <img class="sheet-img" src="cleric.png" alt="Cleric Sheet">
+    </div>
+
+    <div class="card">
+      <span class="badge">Monster</span>
+      <h3>Emerald Slime</h3>
+      <div class="preview-box">
+        <img src="slime_green_walk_preview.gif" alt="Slime Animation">
+      </div>
+      <img class="sheet-img" src="slime_green.png" alt="Slime Sheet">
+    </div>
+
+    <div class="card">
+      <span class="badge">Monster</span>
+      <h3>Azure Slime</h3>
+      <div class="preview-box">
+        <img src="slime_blue_walk_preview.gif" alt="Blue Slime Animation">
+      </div>
+      <img class="sheet-img" src="slime_blue.png" alt="Blue Slime Sheet">
+    </div>
+
+    <div class="card">
+      <span class="badge">Monster</span>
+      <h3>Magma Slime</h3>
+      <div class="preview-box">
+        <img src="slime_red_walk_preview.gif" alt="Red Slime Animation">
+      </div>
+      <img class="sheet-img" src="slime_red.png" alt="Red Slime Sheet">
+    </div>
+
+    <div class="card">
+      <span class="badge">Monster</span>
+      <h3>Goblin Scout</h3>
+      <div class="preview-box">
+        <img src="goblin_walk_preview.gif" alt="Goblin Animation">
+      </div>
+      <img class="sheet-img" src="goblin.png" alt="Goblin Sheet">
+    </div>
+
+    <div class="card">
+      <span class="badge">Monster</span>
+      <h3>Undead Skeleton</h3>
+      <div class="preview-box">
+        <img src="skeleton_walk_preview.gif" alt="Skeleton Animation">
+      </div>
+      <img class="sheet-img" src="skeleton.png" alt="Skeleton Sheet">
+    </div>
+  </div>
+</body>
+</html>

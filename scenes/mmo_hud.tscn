@@ -1,0 +1,428 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/mmo_hud.gd" id="1_mmo_hud"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_glass"]
+bg_color = Color(0.04, 0.06, 0.11, 0.8)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.22, 0.74, 0.97, 0.35)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+shadow_color = Color(0, 0, 0, 0.5)
+shadow_size = 12
+
+[node name="MMOHUD" type="CanvasLayer"]
+script = ExtResource("1_mmo_hud")
+
+[node name="TopBar" type="HBoxContainer" parent="."]
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 12.0
+offset_top = 10.0
+offset_right = -12.0
+offset_bottom = 90.0
+grow_horizontal = 2
+theme_override_constants/separation = 16
+
+[node name="PlayerStatus" type="PanelContainer" parent="TopBar"]
+custom_minimum_size = Vector2(280, 76)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_glass")
+
+[node name="AvatarOrb" type="Control" parent="TopBar/PlayerStatus"]
+custom_minimum_size = Vector2(56, 56)
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 4
+
+[node name="LvlBadge" type="Label" parent="TopBar/PlayerStatus/AvatarOrb"]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -28.0
+offset_top = -14.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_colors/font_color = Color(0.98, 0.75, 0.14, 1)
+theme_override_font_sizes/font_size = 10
+text = "Lv. 1"
+
+[node name="VBox" type="VBoxContainer" parent="TopBar/PlayerStatus"]
+layout_mode = 2
+offset_left = 64.0
+offset_top = 6.0
+offset_right = 270.0
+offset_bottom = 70.0
+theme_override_constants/separation = 3
+
+[node name="HeroMeta" type="HBoxContainer" parent="TopBar/PlayerStatus/VBox"]
+layout_mode = 2
+
+[node name="HeroName" type="Label" parent="TopBar/PlayerStatus/VBox/HeroMeta"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.95, 0.95, 1)
+theme_override_font_sizes/font_size = 12
+text = "Siegfried"
+
+[node name="HeroJob" type="Label" parent="TopBar/PlayerStatus/VBox/HeroMeta"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.22, 0.74, 0.97, 1)
+theme_override_font_sizes/font_size = 10
+text = "Paladin"
+horizontal_alignment = 2
+
+[node name="HPBar" type="ProgressBar" parent="TopBar/PlayerStatus/VBox"]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+max_value = 320.0
+value = 320.0
+show_percentage = false
+
+[node name="MPBar" type="ProgressBar" parent="TopBar/PlayerStatus/VBox"]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+max_value = 120.0
+value = 120.0
+show_percentage = false
+
+[node name="EXPBar" type="ProgressBar" parent="TopBar/PlayerStatus/VBox"]
+custom_minimum_size = Vector2(0, 4)
+layout_mode = 2
+value = 25.0
+show_percentage = false
+
+[node name="JobEXPBar" type="ProgressBar" parent="TopBar/PlayerStatus/VBox"]
+custom_minimum_size = Vector2(0, 4)
+layout_mode = 2
+value = 40.0
+show_percentage = false
+
+[node name="GoldLabel" type="Label" parent="TopBar/PlayerStatus/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.98, 0.75, 0.14, 1)
+theme_override_font_sizes/font_size = 9
+text = "💰 1,250 G"
+
+[node name="TargetFrame" type="PanelContainer" parent="TopBar"]
+visible = false
+custom_minimum_size = Vector2(220, 60)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_glass")
+
+[node name="HBox" type="HBoxContainer" parent="TopBar/TargetFrame"]
+layout_mode = 2
+
+[node name="VBox" type="VBoxContainer" parent="TopBar/TargetFrame/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="TargetName" type="Label" parent="TopBar/TargetFrame/HBox/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.3, 0.3, 1)
+theme_override_font_sizes/font_size = 11
+text = "Poring Slime"
+
+[node name="TargetElement" type="Label" parent="TopBar/TargetFrame/HBox/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.6, 0.7, 0.8, 1)
+theme_override_font_sizes/font_size = 9
+text = "💧 Water"
+
+[node name="TargetHPBar" type="ProgressBar" parent="TopBar/TargetFrame/HBox/VBox"]
+custom_minimum_size = Vector2(0, 8)
+layout_mode = 2
+value = 100.0
+show_percentage = false
+
+[node name="PartyList" type="VBoxContainer" parent="."]
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 12.0
+offset_top = -120.0
+offset_right = 160.0
+offset_bottom = 80.0
+grow_vertical = 2
+theme_override_constants/separation = 6
+
+[node name="PartyHeader" type="Label" parent="PartyList"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.22, 0.74, 0.97, 1)
+theme_override_font_sizes/font_size = 10
+text = "⚔️ PARTY (4/4)"
+
+[node name="Member1" type="PanelContainer" parent="PartyList"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_glass")
+
+[node name="Label" type="Label" parent="PartyList/Member1"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.98, 0.75, 0.14, 1)
+theme_override_font_sizes/font_size = 9
+text = "★ You (Paladin)"
+
+[node name="Member2" type="PanelContainer" parent="PartyList"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_glass")
+
+[node name="Label" type="Label" parent="PartyList/Member2"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 9
+text = "Freya [Priest] - Near"
+
+[node name="Member3" type="PanelContainer" parent="PartyList"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_glass")
+
+[node name="Label" type="Label" parent="PartyList/Member3"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 9
+text = "Ignis [Wizard] - 8m"
+
+[node name="Member4" type="PanelContainer" parent="PartyList"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_glass")
+
+[node name="Label" type="Label" parent="PartyList/Member4"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 9
+text = "Lyra [Rogue] - 12m"
+
+[node name="BottomHUD" type="HBoxContainer" parent="."]
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 12.0
+offset_top = -140.0
+offset_right = -12.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/separation = 12
+
+[node name="ChatBox" type="PanelContainer" parent="BottomHUD"]
+custom_minimum_size = Vector2(260, 120)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_glass")
+
+[node name="VBox" type="VBoxContainer" parent="BottomHUD/ChatBox"]
+layout_mode = 2
+
+[node name="ChatMessages" type="RichTextLabel" parent="BottomHUD/ChatBox/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+bbcode_enabled = true
+scroll_following = true
+
+[node name="HBox" type="HBoxContainer" parent="BottomHUD/ChatBox/VBox"]
+layout_mode = 2
+
+[node name="ChatInput" type="LineEdit" parent="BottomHUD/ChatBox/VBox/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Press Enter to chat..."
+
+[node name="Hotbar" type="VBoxContainer" parent="BottomHUD"]
+layout_mode = 2
+size_flags_horizontal = 6
+alignment = 2
+
+[node name="PotionRow" type="HBoxContainer" parent="BottomHUD/Hotbar"]
+layout_mode = 2
+alignment = 1
+
+[node name="F1" type="Button" parent="BottomHUD/Hotbar/PotionRow"]
+custom_minimum_size = Vector2(32, 28)
+layout_mode = 2
+text = "🧪 F1"
+
+[node name="F2" type="Button" parent="BottomHUD/Hotbar/PotionRow"]
+custom_minimum_size = Vector2(32, 28)
+layout_mode = 2
+text = "💧 F2"
+
+[node name="F3" type="Button" parent="BottomHUD/Hotbar/PotionRow"]
+custom_minimum_size = Vector2(32, 28)
+layout_mode = 2
+text = "🍇 F3"
+
+[node name="F4" type="Button" parent="BottomHUD/Hotbar/PotionRow"]
+custom_minimum_size = Vector2(32, 28)
+layout_mode = 2
+text = "⚡ F4"
+
+[node name="SkillRow" type="HBoxContainer" parent="BottomHUD/Hotbar"]
+layout_mode = 2
+alignment = 1
+
+[node name="S1" type="Button" parent="BottomHUD/Hotbar/SkillRow"]
+custom_minimum_size = Vector2(36, 36)
+layout_mode = 2
+text = "1"
+
+[node name="S2" type="Button" parent="BottomHUD/Hotbar/SkillRow"]
+custom_minimum_size = Vector2(36, 36)
+layout_mode = 2
+text = "2"
+
+[node name="S3" type="Button" parent="BottomHUD/Hotbar/SkillRow"]
+custom_minimum_size = Vector2(36, 36)
+layout_mode = 2
+text = "3"
+
+[node name="S4" type="Button" parent="BottomHUD/Hotbar/SkillRow"]
+custom_minimum_size = Vector2(36, 36)
+layout_mode = 2
+text = "4"
+
+[node name="S5" type="Button" parent="BottomHUD/Hotbar/SkillRow"]
+custom_minimum_size = Vector2(36, 36)
+layout_mode = 2
+text = "5"
+
+[node name="S6" type="Button" parent="BottomHUD/Hotbar/SkillRow"]
+custom_minimum_size = Vector2(36, 36)
+layout_mode = 2
+text = "6"
+
+[node name="S7" type="Button" parent="BottomHUD/Hotbar/SkillRow"]
+custom_minimum_size = Vector2(36, 36)
+layout_mode = 2
+text = "7"
+
+[node name="S8" type="Button" parent="BottomHUD/Hotbar/SkillRow"]
+custom_minimum_size = Vector2(36, 36)
+layout_mode = 2
+text = "8"
+
+[node name="DockMenu" type="VBoxContainer" parent="BottomHUD"]
+layout_mode = 2
+alignment = 2
+
+[node name="HBox" type="HBoxContainer" parent="BottomHUD/DockMenu"]
+layout_mode = 2
+
+[node name="InvBtn" type="Button" parent="BottomHUD/DockMenu/HBox"]
+layout_mode = 2
+text = "🎒 [I]"
+
+[node name="StatsBtn" type="Button" parent="BottomHUD/DockMenu/HBox"]
+layout_mode = 2
+text = "📊 [C]"
+
+[node name="SkillBtn" type="Button" parent="BottomHUD/DockMenu/HBox"]
+layout_mode = 2
+text = "📖 [K]"
+
+[node name="PartyBtn" type="Button" parent="BottomHUD/DockMenu/HBox"]
+layout_mode = 2
+text = "👥 [P]"
+
+[node name="Windows" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="InventoryWindow" type="Panel" parent="Windows"]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -160.0
+offset_top = -140.0
+offset_right = 160.0
+offset_bottom = 140.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_glass")
+
+[node name="StatsWindow" type="Panel" parent="Windows"]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -140.0
+offset_top = -130.0
+offset_right = 140.0
+offset_bottom = 130.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_glass")
+
+[node name="SkillsWindow" type="Panel" parent="Windows"]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -150.0
+offset_top = -120.0
+offset_right = 150.0
+offset_bottom = 120.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_glass")
+
+[node name="PartyWindow" type="Panel" parent="Windows"]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -130.0
+offset_top = -100.0
+offset_right = 130.0
+offset_bottom = 100.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_glass")
+
+[node name="MapWindow" type="Panel" parent="Windows"]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -180.0
+offset_top = -120.0
+offset_right = 180.0
+offset_bottom = 120.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_glass")
+
+[node name="EmoteBar" type="PanelContainer" parent="."]
+visible = false
+offset_left = 14.0
+offset_top = 180.0
+offset_right = 260.0
+offset_bottom = 216.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_glass")
+
+[connection signal="text_submitted" from="BottomHUD/ChatBox/VBox/HBox/ChatInput" to="." method="_on_chat_input_submitted"]

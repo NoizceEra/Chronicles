@@ -1,0 +1,103 @@
+[gd_resource type="SpriteFrames" load_steps=18 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/sprites/slime_red.png" id="1_tex"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_walk_down_0"]
+atlas = ExtResource("1_tex")
+region = Rect2(0, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_idle_down"]
+atlas = ExtResource("1_tex")
+region = Rect2(32, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_walk_down_1"]
+atlas = ExtResource("1_tex")
+region = Rect2(64, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_action_down"]
+atlas = ExtResource("1_tex")
+region = Rect2(96, 0, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_walk_left_0"]
+atlas = ExtResource("1_tex")
+region = Rect2(0, 32, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_idle_left"]
+atlas = ExtResource("1_tex")
+region = Rect2(32, 32, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_walk_left_1"]
+atlas = ExtResource("1_tex")
+region = Rect2(64, 32, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_walk_right_0"]
+atlas = ExtResource("1_tex")
+region = Rect2(0, 64, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_idle_right"]
+atlas = ExtResource("1_tex")
+region = Rect2(32, 64, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_walk_right_1"]
+atlas = ExtResource("1_tex")
+region = Rect2(64, 64, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_walk_up_0"]
+atlas = ExtResource("1_tex")
+region = Rect2(0, 96, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_idle_up"]
+atlas = ExtResource("1_tex")
+region = Rect2(32, 96, 32, 32)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_walk_up_1"]
+atlas = ExtResource("1_tex")
+region = Rect2(64, 96, 32, 32)
+
+[resource]
+animations = [{
+"frames": [SubResource("AtlasTexture_idle_down")],
+"loop": true,
+"name": &"idle_down",
+"speed": 5.0
+}, {
+"frames": [SubResource("AtlasTexture_idle_left")],
+"loop": true,
+"name": &"idle_left",
+"speed": 5.0
+}, {
+"frames": [SubResource("AtlasTexture_idle_right")],
+"loop": true,
+"name": &"idle_right",
+"speed": 5.0
+}, {
+"frames": [SubResource("AtlasTexture_idle_up")],
+"loop": true,
+"name": &"idle_up",
+"speed": 5.0
+}, {
+"frames": [SubResource("AtlasTexture_walk_down_0"), SubResource("AtlasTexture_idle_down"), SubResource("AtlasTexture_walk_down_1"), SubResource("AtlasTexture_idle_down")],
+"loop": true,
+"name": &"walk_down",
+"speed": 6.0
+}, {
+"frames": [SubResource("AtlasTexture_walk_left_0"), SubResource("AtlasTexture_idle_left"), SubResource("AtlasTexture_walk_left_1"), SubResource("AtlasTexture_idle_left")],
+"loop": true,
+"name": &"walk_left",
+"speed": 6.0
+}, {
+"frames": [SubResource("AtlasTexture_walk_right_0"), SubResource("AtlasTexture_idle_right"), SubResource("AtlasTexture_walk_right_1"), SubResource("AtlasTexture_idle_right")],
+"loop": true,
+"name": &"walk_right",
+"speed": 6.0
+}, {
+"frames": [SubResource("AtlasTexture_walk_up_0"), SubResource("AtlasTexture_idle_up"), SubResource("AtlasTexture_walk_up_1"), SubResource("AtlasTexture_idle_up")],
+"loop": true,
+"name": &"walk_up",
+"speed": 6.0
+}, {
+"frames": [SubResource("AtlasTexture_action_down")],
+"loop": false,
+"name": &"action",
+"speed": 5.0
+}]

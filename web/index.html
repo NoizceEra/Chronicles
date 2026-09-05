@@ -1,0 +1,2769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chronicles of Midgard: 2D MMORPG - Web Client</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Rajdhani:wght@500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --glass-bg: rgba(10, 16, 28, 0.78);
+    --glass-bg-hover: rgba(18, 28, 48, 0.88);
+    --glass-border: rgba(56, 189, 248, 0.35);
+    --glass-border-glow: rgba(56, 189, 248, 0.6);
+    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.65), inset 0 0 16px rgba(56, 189, 248, 0.08);
+    --ruby: #f43f5e;
+    --ruby-glow: rgba(244, 63, 94, 0.6);
+    --cobalt: #38bdf8;
+    --cobalt-glow: rgba(56, 189, 248, 0.6);
+    --amethyst: #c084fc;
+    --amethyst-glow: rgba(192, 132, 252, 0.6);
+    --gold: #fbbf24;
+    --gold-glow: rgba(251, 191, 36, 0.6);
+    --emerald: #34d399;
+  }
+
+  * {
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  body {
+    background: radial-gradient(circle at center, #0f172a 0%, #050811 100%);
+    color: #f1f5f9;
+    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #viewport-wrapper {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    max-width: 1440px;
+    max-height: 900px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 60px rgba(0, 0, 0, 0.9);
+  }
+
+  #canvas-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: #020617;
+    overflow: hidden;
+  }
+
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
+
+  /* Glassmorphism Classes */
+  .glass-panel {
+    background: var(--glass-bg);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    box-shadow: var(--glass-shadow);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    pointer-events: auto;
+  }
+  .glass-panel:hover {
+    border-color: var(--glass-border-glow);
+  }
+
+  .glass-titlebar {
+    background: linear-gradient(90deg, rgba(56, 189, 248, 0.25) 0%, rgba(15, 23, 42, 0.4) 100%);
+    border-bottom: 1px solid var(--glass-border);
+    padding: 8px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: 'Cinzel', serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #e0f2fe;
+    cursor: move;
+    border-radius: 11px 11px 0 0;
+  }
+  .glass-titlebar .close-btn {
+    cursor: pointer;
+    color: #94a3b8;
+    font-size: 1.1rem;
+    line-height: 1;
+    transition: color 0.15s;
+  }
+  .glass-titlebar .close-btn:hover {
+    color: var(--ruby);
+  }
+
+  /* HUD LAYER (Over Canvas) */
+  #hud-layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 14px;
+  }
+
+  /* TOP HUD BAR */
+  .hud-top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  /* PLAYER STATUS ORB & BARS (Top-Left) */
+  .player-status-frame {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px 10px 12px;
+  }
+  .avatar-orb-container {
+    position: relative;
+    width: 64px;
+    height: 64px;
+  }
+  .avatar-orb {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: 2px solid var(--gold);
+    box-shadow: 0 0 15px var(--gold-glow);
+    background: radial-gradient(circle at 30% 30%, #334155, #090d16);
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .avatar-orb img {
+    width: 48px;
+    height: 48px;
+    image-rendering: pixelated;
+    transform: translateY(4px);
+  }
+  .player-lvl-badge {
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    background: linear-gradient(135deg, #d97706, #78350f);
+    border: 1.5px solid #fbbf24;
+    color: #fff;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 0.75rem;
+    padding: 1px 6px;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+  }
+
+  .vitals-column {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 190px;
+  }
+  .hero-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .hero-name {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #e2e8f0;
+    text-shadow: 0 0 8px rgba(255,255,255,0.3);
+  }
+  .hero-job {
+    font-size: 0.75rem;
+    color: #38bdf8;
+    font-weight: 600;
+  }
+
+  /* BAR CONTAINER */
+  .bar-wrapper {
+    position: relative;
+    height: 14px;
+    background: rgba(15, 23, 42, 0.9);
+    border-radius: 7px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.6);
+  }
+  .bar-fill {
+    height: 100%;
+    width: 100%;
+    border-radius: 6px;
+    transition: width 0.25s ease-out;
+    position: relative;
+  }
+  .bar-fill::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 50%;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.4), transparent);
+    border-radius: 6px 6px 0 0;
+  }
+  .bar-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.9);
+    letter-spacing: 0.5px;
+  }
+
+  /* Colors */
+  .hp-fill {
+    background: linear-gradient(90deg, #be123c, #f43f5e);
+    box-shadow: 0 0 10px var(--ruby-glow);
+  }
+  .mp-fill {
+    background: linear-gradient(90deg, #0284c7, #38bdf8);
+    box-shadow: 0 0 10px var(--cobalt-glow);
+  }
+  .exp-fill {
+    background: linear-gradient(90deg, #7e22ce, #c084fc);
+    box-shadow: 0 0 10px var(--amethyst-glow);
+  }
+  .jobexp-fill {
+    background: linear-gradient(90deg, #d97706, #fbbf24);
+    box-shadow: 0 0 10px var(--gold-glow);
+  }
+
+  /* TARGET FRAME (Top-Center) */
+  #target-frame {
+    display: none;
+    padding: 8px 14px;
+    align-items: center;
+    gap: 12px;
+    min-width: 250px;
+    animation: fadeIn 0.2s ease-out;
+  }
+  #target-frame.active {
+    display: flex;
+  }
+  .target-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px solid var(--ruby);
+    background: #0f172a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .target-avatar img {
+    width: 36px;
+    height: 36px;
+    image-rendering: pixelated;
+  }
+  .target-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .target-name-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    font-weight: 700;
+  }
+  .target-element-badge {
+    font-size: 0.7rem;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    color: #fca5a5;
+  }
+
+  /* MINIMAP RADAR & CONTROLS (Top-Right) */
+  .top-right-group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+  }
+  .minimap-container {
+    padding: 6px;
+    position: relative;
+    border-radius: 12px;
+  }
+  #minimap-canvas {
+    width: 140px;
+    height: 140px;
+    border-radius: 8px;
+    background: #050b14;
+    display: block;
+  }
+  .minimap-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.72rem;
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    color: #94a3b8;
+    margin-bottom: 4px;
+    padding: 0 4px;
+  }
+  .minimap-coords {
+    color: var(--gold);
+  }
+
+  /* QUICK MENU / AUDIO BAR */
+  .quick-bar {
+    display: flex;
+    gap: 6px;
+    padding: 4px 8px;
+  }
+  .icon-btn {
+    background: rgba(30, 41, 59, 0.7);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    color: #e2e8f0;
+    padding: 5px 9px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.15s;
+  }
+  .icon-btn:hover {
+    background: rgba(56, 189, 248, 0.25);
+    border-color: var(--cobalt);
+    color: #fff;
+    transform: translateY(-1px);
+  }
+  .icon-btn.active {
+    background: var(--cobalt);
+    color: #030712;
+    border-color: #fff;
+  }
+
+  /* MIDDLE HUD: PARTY LIST (Left Side) */
+  .hud-middle-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    flex: 1;
+    pointer-events: none;
+  }
+  .party-list-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px;
+    width: 175px;
+    pointer-events: auto;
+  }
+  .party-header {
+    font-family: 'Cinzel', serif;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #38bdf8;
+    letter-spacing: 1px;
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding-bottom: 4px;
+  }
+  .party-member-card {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(148, 163, 184, 0.15);
+    border-radius: 6px;
+    padding: 6px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .party-member-card:hover {
+    border-color: var(--cobalt);
+    background: rgba(30, 41, 59, 0.8);
+  }
+  .party-member-card.leader {
+    border-left: 3px solid var(--gold);
+  }
+  .pm-top {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.72rem;
+    font-weight: 700;
+  }
+  .pm-class {
+    color: #94a3b8;
+    font-size: 0.65rem;
+  }
+  .pm-dist {
+    font-size: 0.65rem;
+    color: var(--emerald);
+  }
+  .pm-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .pm-bar-wrap {
+    height: 6px;
+    background: #090d16;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .pm-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+  }
+
+  /* BOTTOM HUD: CHAT + HOTBAR + MENU BUTTONS */
+  .hud-bottom-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    width: 100%;
+    gap: 16px;
+  }
+
+  /* CHAT PANEL (Bottom-Left) */
+  .chat-box {
+    width: 320px;
+    height: 180px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .chat-tabs {
+    display: flex;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    background: rgba(10, 15, 26, 0.6);
+  }
+  .chat-tab {
+    flex: 1;
+    padding: 4px;
+    font-size: 0.7rem;
+    text-align: center;
+    cursor: pointer;
+    color: #94a3b8;
+    font-weight: 600;
+    transition: all 0.15s;
+  }
+  .chat-tab.active {
+    color: var(--cobalt);
+    border-bottom: 2px solid var(--cobalt);
+    background: rgba(56, 189, 248, 0.1);
+  }
+  .chat-messages {
+    flex: 1;
+    padding: 8px 10px;
+    overflow-y: auto;
+    font-size: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    line-height: 1.35;
+  }
+  .chat-messages::-webkit-scrollbar { width: 4px; }
+  .chat-messages::-webkit-scrollbar-thumb { background: rgba(56, 189, 248, 0.3); border-radius: 2px; }
+  .chat-msg { word-break: break-word; }
+  .chat-msg.system { color: #fde047; }
+  .chat-msg.party { color: #86efac; }
+  .chat-msg.whisper { color: #f472b6; }
+  .chat-msg.mvp { color: #f43f5e; font-weight: bold; text-shadow: 0 0 6px rgba(244,63,94,0.5); }
+  .chat-input-row {
+    display: flex;
+    padding: 6px;
+    background: rgba(10, 15, 26, 0.8);
+    border-top: 1px solid rgba(255,255,255,0.1);
+    gap: 6px;
+  }
+  .chat-input {
+    flex: 1;
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    border-radius: 6px;
+    padding: 5px 10px;
+    color: #fff;
+    font-size: 0.75rem;
+    outline: none;
+  }
+  .chat-input:focus {
+    border-color: var(--cobalt);
+    box-shadow: 0 0 8px rgba(56, 189, 248, 0.3);
+  }
+
+  /* ACTIVE HOTBAR (Bottom-Center) */
+  .hotbar-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  .hotbar-slots {
+    display: flex;
+    gap: 6px;
+    padding: 8px 12px;
+  }
+  .slot {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    background: rgba(15, 23, 42, 0.85);
+    border: 1.5px solid rgba(148, 163, 184, 0.3);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'Rajdhani', sans-serif;
+  }
+  .slot:hover {
+    border-color: var(--cobalt);
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+    transform: translateY(-2px);
+  }
+  .slot.active-press {
+    transform: scale(0.95);
+    border-color: var(--gold);
+  }
+  .slot-icon {
+    width: 32px;
+    height: 32px;
+    image-rendering: pixelated;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+  }
+  .slot-key {
+    position: absolute;
+    top: 2px;
+    left: 4px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #94a3b8;
+  }
+  .slot-cost {
+    position: absolute;
+    bottom: 2px;
+    right: 4px;
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: #38bdf8;
+  }
+  .cooldown-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    border-radius: 6px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: #fde047;
+  }
+
+  /* SYSTEM MENU BUTTONS (Bottom-Right) */
+  .hud-dock-menu {
+    display: flex;
+    gap: 6px;
+    padding: 8px 12px;
+  }
+  .dock-btn {
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: #e2e8f0;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    transition: all 0.15s;
+  }
+  .dock-btn:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+    transform: translateY(-2px);
+    box-shadow: 0 0 12px rgba(251, 191, 36, 0.3);
+  }
+  .dock-btn span.key-hint {
+    font-size: 0.62rem;
+    color: #94a3b8;
+  }
+
+  /* DRAGGABLE FLOATING WINDOWS */
+  .window-panel {
+    position: absolute;
+    display: none;
+    z-index: 50;
+    width: 360px;
+    animation: zoomIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .window-panel.open {
+    display: block;
+  }
+  .window-body {
+    padding: 14px;
+    max-height: 480px;
+    overflow-y: auto;
+  }
+  .window-body::-webkit-scrollbar { width: 5px; }
+  .window-body::-webkit-scrollbar-thumb { background: rgba(56, 189, 248, 0.3); border-radius: 3px; }
+
+  /* INVENTORY & PAPERDOLL */
+  .paperdoll-container {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 14px;
+    background: rgba(15, 23, 42, 0.6);
+    border-radius: 8px;
+    padding: 10px;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .paperdoll-col {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .equip-slot {
+    width: 40px;
+    height: 40px;
+    background: rgba(10, 15, 26, 0.85);
+    border: 1.5px dashed rgba(148, 163, 184, 0.4);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    cursor: pointer;
+    position: relative;
+  }
+  .equip-slot.equipped {
+    border-style: solid;
+    border-color: var(--gold);
+    box-shadow: 0 0 8px rgba(251, 191, 36, 0.3);
+  }
+  .inventory-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .inv-slot {
+    width: 44px;
+    height: 44px;
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.2rem;
+    position: relative;
+    transition: all 0.15s;
+  }
+  .inv-slot:hover {
+    border-color: var(--cobalt);
+    background: rgba(30, 41, 59, 0.9);
+  }
+  .inv-slot .item-count {
+    position: absolute;
+    bottom: 2px;
+    right: 4px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #f1f5f9;
+  }
+
+  /* STATS ALLOCATION UI */
+  .stat-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: rgba(15, 23, 42, 0.6);
+    margin-bottom: 6px;
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+  .stat-label {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .stat-val-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .stat-value {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--gold);
+    min-width: 32px;
+    text-align: right;
+  }
+  .plus-stat-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    background: var(--cobalt);
+    color: #030712;
+    border: none;
+    font-weight: bold;
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+  }
+  .plus-stat-btn:hover {
+    background: #fff;
+    box-shadow: 0 0 8px #38bdf8;
+  }
+  .plus-stat-btn:disabled {
+    background: #475569;
+    color: #94a3b8;
+    cursor: not-allowed;
+  }
+
+  /* SKILL TREE UI */
+  .skill-node-card {
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 8px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  .skill-icon-frame {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    background: #090d16;
+    border: 1.5px solid var(--cobalt);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+  }
+
+  /* ITEM HOVER TOOLTIP */
+  #item-tooltip {
+    position: absolute;
+    display: none;
+    z-index: 1000;
+    background: rgba(10, 16, 28, 0.95);
+    border: 1.5px solid var(--gold);
+    border-radius: 8px;
+    padding: 10px 14px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.8);
+    pointer-events: none;
+    max-width: 240px;
+    font-size: 0.75rem;
+  }
+  .tooltip-title {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--gold);
+    margin-bottom: 4px;
+  }
+  .tooltip-meta {
+    color: #94a3b8;
+    font-size: 0.7rem;
+    margin-bottom: 6px;
+  }
+  .tooltip-desc {
+    color: #e2e8f0;
+    line-height: 1.4;
+  }
+
+  /* EMOTE PICKER FLOATING BAR */
+  .emote-bar {
+    position: absolute;
+    bottom: 200px;
+    left: 20px;
+    display: none;
+    padding: 6px 10px;
+    gap: 8px;
+    z-index: 60;
+  }
+  .emote-bar.active {
+    display: flex;
+  }
+  .emote-btn {
+    font-size: 1.3rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+  .emote-btn:hover {
+    transform: scale(1.3);
+  }
+
+  /* OVERLAY BANNER (MVP / LEVEL UP) */
+  #announcement-banner {
+    position: absolute;
+    top: 20%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    animation: bannerPop 2.5s ease-out forwards;
+    z-index: 100;
+  }
+  .banner-title {
+    font-family: 'Cinzel', serif;
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: #fbbf24;
+    text-shadow: 0 0 20px rgba(251, 191, 36, 0.8), 0 4px 10px rgba(0,0,0,0.9);
+    letter-spacing: 2px;
+  }
+  .banner-sub {
+    font-size: 1.1rem;
+    color: #e0f2fe;
+    text-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
+  }
+
+  /* ANIMATIONS */
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes zoomIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+  @keyframes bannerPop {
+    0% { opacity: 0; transform: translate(-50%, -40%) scale(0.8); }
+    15% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+    25% { transform: translate(-50%, -50%) scale(1); }
+    80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -60%) scale(0.9); }
+  }
+</style>
+</head>
+<body>
+
+<div id="viewport-wrapper">
+  <div id="canvas-container">
+    <canvas id="gameCanvas" width="1280" height="720"></canvas>
+  </div>
+
+  <!-- HUD OVERLAY LAYER -->
+  <div id="hud-layer">
+    
+    <!-- TOP ROW -->
+    <div class="hud-top-row">
+      <!-- Player Status Frame (Ruby HP, Cobalt MP, Amethyst EXP, Gold Job EXP) -->
+      <div class="player-status-frame glass-panel">
+        <div class="avatar-orb-container">
+          <div class="avatar-orb" id="player-avatar-orb">
+            <img id="player-avatar-img" src="assets/knight.png" alt="Hero">
+          </div>
+          <div class="player-lvl-badge" id="hud-lvl-badge">Lv. 1</div>
+        </div>
+        <div class="vitals-column">
+          <div class="hero-meta">
+            <span class="hero-name" id="hud-hero-name">Siegfried</span>
+            <span class="hero-job" id="hud-hero-job">Paladin</span>
+          </div>
+          <!-- HP Ruby Bar -->
+          <div class="bar-wrapper">
+            <div class="bar-fill hp-fill" id="hud-hp-bar" style="width: 100%;"></div>
+            <div class="bar-text" id="hud-hp-text">HP 320 / 320</div>
+          </div>
+          <!-- MP Cobalt Bar -->
+          <div class="bar-wrapper">
+            <div class="bar-fill mp-fill" id="hud-mp-bar" style="width: 100%;"></div>
+            <div class="bar-text" id="hud-mp-text">MP 120 / 120</div>
+          </div>
+          <!-- EXP Amethyst Bar -->
+          <div class="bar-wrapper" style="height: 6px;">
+            <div class="bar-fill exp-fill" id="hud-exp-bar" style="width: 0%;"></div>
+          </div>
+          <!-- Job EXP Golden Bar -->
+          <div class="bar-wrapper" style="height: 6px;">
+            <div class="bar-fill jobexp-fill" id="hud-jobexp-bar" style="width: 40%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Floating Target Frame (Center) -->
+      <div id="target-frame" class="glass-panel">
+        <div class="target-avatar">
+          <img id="target-img" src="assets/slime_green.png" alt="Target">
+        </div>
+        <div class="target-info">
+          <div class="target-name-row">
+            <span id="target-name" style="color: #fca5a5;">Poring Slime</span>
+            <span class="target-element-badge" id="target-element">💧 Water</span>
+          </div>
+          <div class="bar-wrapper" style="height: 10px;">
+            <div class="bar-fill hp-fill" id="target-hp-bar" style="width: 100%;"></div>
+            <div class="bar-text" id="target-hp-text">100%</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Minimap Radar & Controls (Right) -->
+      <div class="top-right-group">
+        <div class="minimap-container glass-panel">
+          <div class="minimap-header">
+            <span id="zone-name">Midgard Plaza</span>
+            <span class="minimap-coords" id="coords-text">400, 300</span>
+          </div>
+          <canvas id="minimap-canvas" width="140" height="140"></canvas>
+        </div>
+        <div class="quick-bar glass-panel">
+          <button class="icon-btn" id="audio-toggle-btn" onclick="toggleAudio()">🔊 BGM</button>
+          <button class="icon-btn" onclick="toggleEmotes()">💬 Emote</button>
+          <button class="icon-btn" onclick="openWindow('win-map')">🗺️ Map [M]</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MIDDLE ROW: Party List (Left) -->
+    <div class="hud-middle-row">
+      <div class="party-list-panel glass-panel">
+        <div class="party-header">
+          <span>⚔️ PARTY (4/4)</span>
+          <span style="color: var(--emerald); font-size: 0.65rem;">EXP Share: ON</span>
+        </div>
+        <!-- Leader (You) -->
+        <div class="party-member-card leader" onclick="switchHero(0)">
+          <div class="pm-top">
+            <span style="color: var(--gold);">★ You (Paladin)</span>
+            <span class="pm-dist">Leader</span>
+          </div>
+          <div class="pm-bars">
+            <div class="pm-bar-wrap"><div class="pm-bar-fill hp-fill" id="pm-hp-0" style="width: 100%;"></div></div>
+            <div class="pm-bar-wrap"><div class="pm-bar-fill mp-fill" id="pm-mp-0" style="width: 100%;"></div></div>
+          </div>
+        </div>
+        <!-- Member 1: Priest -->
+        <div class="party-member-card" onclick="switchHero(3)">
+          <div class="pm-top">
+            <span style="color: #e0f2fe;">Freya</span>
+            <span class="pm-dist" id="pm-dist-1">Near (4m)</span>
+          </div>
+          <div class="pm-class">High Priest [Support]</div>
+          <div class="pm-bars">
+            <div class="pm-bar-wrap"><div class="pm-bar-fill hp-fill" id="pm-hp-1" style="width: 90%;"></div></div>
+            <div class="pm-bar-wrap"><div class="pm-bar-fill mp-fill" id="pm-mp-1" style="width: 85%;"></div></div>
+          </div>
+        </div>
+        <!-- Member 2: Wizard -->
+        <div class="party-member-card" onclick="switchHero(1)">
+          <div class="pm-top">
+            <span style="color: #e0f2fe;">Ignis</span>
+            <span class="pm-dist" id="pm-dist-2">Near (8m)</span>
+          </div>
+          <div class="pm-class">Arch-Wizard [DPS]</div>
+          <div class="pm-bars">
+            <div class="pm-bar-wrap"><div class="pm-bar-fill hp-fill" id="pm-hp-2" style="width: 80%;"></div></div>
+            <div class="pm-bar-wrap"><div class="pm-bar-fill mp-fill" id="pm-mp-2" style="width: 95%;"></div></div>
+          </div>
+        </div>
+        <!-- Member 3: Rogue/Hunter -->
+        <div class="party-member-card" onclick="switchHero(2)">
+          <div class="pm-top">
+            <span style="color: #e0f2fe;">Lyra</span>
+            <span class="pm-dist" id="pm-dist-3">12m</span>
+          </div>
+          <div class="pm-class">Shadow Blade [Agility]</div>
+          <div class="pm-bars">
+            <div class="pm-bar-wrap"><div class="pm-bar-fill hp-fill" id="pm-hp-3" style="width: 85%;"></div></div>
+            <div class="pm-bar-wrap"><div class="pm-bar-fill mp-fill" id="pm-mp-3" style="width: 70%;"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOTTOM ROW: Chat, Hotbar, Menu Dock -->
+    <div class="hud-bottom-row">
+      <!-- Chat Box (Bottom-Left) -->
+      <div class="chat-box glass-panel">
+        <div class="chat-tabs">
+          <div class="chat-tab active" onclick="setChatTab('all')">All</div>
+          <div class="chat-tab" onclick="setChatTab('party')">Party</div>
+          <div class="chat-tab" onclick="setChatTab('guild')">Guild</div>
+          <div class="chat-tab" onclick="setChatTab('whisper')">Whisper</div>
+        </div>
+        <div class="chat-messages" id="chat-msgs">
+          <div class="chat-msg system">⚔️ Welcome to Chronicles of Midgard! Press [Enter] to chat, [I] for Inventory, [C] for Stats.</div>
+          <div class="chat-msg system">🌟 Safe zone active: Midgard Central Fountain. Wall sliding & circular physics enabled!</div>
+          <div class="chat-msg party">[Freya]: May the light of Odin guide our path!</div>
+          <div class="chat-msg mvp">👑 MVP Boss [Golden Thief Bug] has appeared in the Catacombs!</div>
+        </div>
+        <div class="chat-input-row">
+          <input type="text" id="chat-input" class="chat-input" placeholder="Press Enter to talk (or /heart, /sleep, /omg)..." onkeydown="handleChatKey(event)">
+        </div>
+      </div>
+
+      <!-- Active Hotbar (Bottom-Center) -->
+      <div class="hotbar-container">
+        <!-- Potions F1-F4 Row -->
+        <div class="hotbar-slots glass-panel" style="padding: 4px 8px; gap: 4px;">
+          <div class="slot" style="width: 36px; height: 36px;" onclick="usePotion('hp')">
+            <span class="slot-key">F1</span>
+            <span class="slot-icon">🧪</span>
+            <span class="slot-cost" id="hp-pot-count" style="color:#ef4444;">12</span>
+          </div>
+          <div class="slot" style="width: 36px; height: 36px;" onclick="usePotion('mp')">
+            <span class="slot-key">F2</span>
+            <span class="slot-icon">💧</span>
+            <span class="slot-cost" id="mp-pot-count" style="color:#38bdf8;">8</span>
+          </div>
+          <div class="slot" style="width: 36px; height: 36px;" onclick="usePotion('ygg')">
+            <span class="slot-key">F3</span>
+            <span class="slot-icon">🍇</span>
+            <span class="slot-cost" style="color:#fbbf24;">3</span>
+          </div>
+          <div class="slot" style="width: 36px; height: 36px;" onclick="usePotion('speed')">
+            <span class="slot-key">F4</span>
+            <span class="slot-icon">⚡</span>
+            <span class="slot-cost" style="color:#34d399;">5</span>
+          </div>
+        </div>
+
+        <!-- 8 Active Skills Row -->
+        <div class="hotbar-slots glass-panel">
+          <!-- Skill 1 -->
+          <div class="slot" id="slot-1" onclick="castSkill(1)">
+            <span class="slot-key">1</span>
+            <span class="slot-icon" id="skill-icon-1">💥</span>
+            <span class="slot-cost">10m</span>
+            <div class="cooldown-overlay" id="cd-1"></div>
+          </div>
+          <!-- Skill 2 -->
+          <div class="slot" id="slot-2" onclick="castSkill(2)">
+            <span class="slot-key">2</span>
+            <span class="slot-icon" id="skill-icon-2">🗡️</span>
+            <span class="slot-cost">15m</span>
+            <div class="cooldown-overlay" id="cd-2"></div>
+          </div>
+          <!-- Skill 3 -->
+          <div class="slot" id="slot-3" onclick="castSkill(3)">
+            <span class="slot-key">3</span>
+            <span class="slot-icon" id="skill-icon-3">🔥</span>
+            <span class="slot-cost">25m</span>
+            <div class="cooldown-overlay" id="cd-3"></div>
+          </div>
+          <!-- Skill 4 -->
+          <div class="slot" id="slot-4" onclick="castSkill(4)">
+            <span class="slot-key">4</span>
+            <span class="slot-icon" id="skill-icon-4">❄️</span>
+            <span class="slot-cost">20m</span>
+            <div class="cooldown-overlay" id="cd-4"></div>
+          </div>
+          <!-- Skill 5 -->
+          <div class="slot" id="slot-5" onclick="castSkill(5)">
+            <span class="slot-key">5</span>
+            <span class="slot-icon" id="skill-icon-5">✨</span>
+            <span class="slot-cost">30m</span>
+            <div class="cooldown-overlay" id="cd-5"></div>
+          </div>
+          <!-- Skill 6 -->
+          <div class="slot" id="slot-6" onclick="castSkill(6)">
+            <span class="slot-key">6</span>
+            <span class="slot-icon" id="skill-icon-6">💚</span>
+            <span class="slot-cost">20m</span>
+            <div class="cooldown-overlay" id="cd-6"></div>
+          </div>
+          <!-- Skill 7 -->
+          <div class="slot" id="slot-7" onclick="castSkill(7)">
+            <span class="slot-key">7</span>
+            <span class="slot-icon" id="skill-icon-7">🛡️</span>
+            <span class="slot-cost">15m</span>
+            <div class="cooldown-overlay" id="cd-7"></div>
+          </div>
+          <!-- Skill 8 -->
+          <div class="slot" id="slot-8" onclick="castSkill(8)">
+            <span class="slot-key">8</span>
+            <span class="slot-icon" id="skill-icon-8">⚡</span>
+            <span class="slot-cost">40m</span>
+            <div class="cooldown-overlay" id="cd-8"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dock Menu (Bottom-Right) -->
+      <div class="hud-dock-menu glass-panel">
+        <button class="dock-btn" onclick="toggleWindow('win-inv')">
+          <span>🎒 Inventory</span>
+          <span class="key-hint">[ I ]</span>
+        </button>
+        <button class="dock-btn" onclick="toggleWindow('win-stats')">
+          <span>📊 Status</span>
+          <span class="key-hint">[ C ]</span>
+        </button>
+        <button class="dock-btn" onclick="toggleWindow('win-skills')">
+          <span>📖 Skills</span>
+          <span class="key-hint">[ K ]</span>
+        </button>
+        <button class="dock-btn" onclick="toggleWindow('win-party')">
+          <span>👥 Party</span>
+          <span class="key-hint">[ P ]</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FLOATING EMOTE PICKER BAR -->
+  <div class="emote-bar glass-panel" id="emote-picker">
+    <button class="emote-btn" onclick="triggerEmote('❤️')">❤️</button>
+    <button class="emote-btn" onclick="triggerEmote('❓')">❓</button>
+    <button class="emote-btn" onclick="triggerEmote('❗')">❗</button>
+    <button class="emote-btn" onclick="triggerEmote('💬')">💬</button>
+    <button class="emote-btn" onclick="triggerEmote('⚔️')">⚔️</button>
+    <button class="emote-btn" onclick="triggerEmote('💤')">💤</button>
+    <button class="emote-btn" onclick="triggerEmote('💀')">💀</button>
+    <button class="emote-btn" onclick="triggerEmote('💰')">💰</button>
+    <button class="emote-btn" onclick="triggerEmote('🔥')">🔥</button>
+    <button class="emote-btn" onclick="triggerEmote('✨')">✨</button>
+  </div>
+
+  <!-- DRAGGABLE WINDOW: INVENTORY & PAPERDOLL -->
+  <div class="window-panel glass-panel" id="win-inv" style="left: 480px; top: 100px;">
+    <div class="glass-titlebar" onmousedown="dragWindow(event, 'win-inv')">
+      <span>🎒 INVENTORY & PAPERDOLL</span>
+      <span class="close-btn" onclick="toggleWindow('win-inv')">✕</span>
+    </div>
+    <div class="window-body">
+      <!-- Paperdoll Equipment -->
+      <div class="paperdoll-container">
+        <div class="paperdoll-col">
+          <div class="equip-slot equipped" title="Headgear: Valkyrie Helm">👑</div>
+          <div class="equip-slot equipped" title="Weapon: Holy Excalibur +10">⚔️</div>
+          <div class="equip-slot equipped" title="Shield: Mirror Shield +7">🛡️</div>
+        </div>
+        <div style="display: flex; align-items: center; justify-content: center;">
+          <img src="assets/knight.png" style="width: 64px; height: 64px; image-rendering: pixelated;">
+        </div>
+        <div class="paperdoll-col">
+          <div class="equip-slot equipped" title="Armor: Dragon Plate +9">🥋</div>
+          <div class="equip-slot equipped" title="Garment: Angelic Cloak">🧥</div>
+          <div class="equip-slot equipped" title="Boots: Hermes Greaves">👢</div>
+        </div>
+      </div>
+
+      <!-- Stat Summary Mini -->
+      <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #94a3b8; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 4px;">
+        <span>ATK: <strong style="color:var(--ruby);" id="sum-atk">245 + 58</strong></span>
+        <span>DEF: <strong style="color:var(--cobalt);" id="sum-def">82 + 34</strong></span>
+        <span>ASPD: <strong style="color:var(--gold);" id="sum-aspd">178</strong></span>
+      </div>
+
+      <!-- 36 Slot Inventory Grid -->
+      <div class="inventory-grid" id="inv-grid">
+        <!-- Rendered by JS -->
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--gold); margin-top: 10px;">
+        <span>💰 Gold: <strong id="inv-gold-val">1,250 G</strong></span>
+        <span style="color:#94a3b8;">Weight: 420 / 2000</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- DRAGGABLE WINDOW: CHARACTER STATS & ALLOCATION -->
+  <div class="window-panel glass-panel" id="win-stats" style="left: 200px; top: 120px;">
+    <div class="glass-titlebar" onmousedown="dragWindow(event, 'win-stats')">
+      <span>📊 STATUS & STAT ALLOCATION</span>
+      <span class="close-btn" onclick="toggleWindow('win-stats')">✕</span>
+    </div>
+    <div class="window-body">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <span style="font-size: 0.85rem; color: #e2e8f0;">Unassigned Stat Points:</span>
+        <span style="font-family:'Rajdhani'; font-size: 1.2rem; font-weight: 700; color: var(--gold);" id="free-stat-pts">15</span>
+      </div>
+
+      <!-- STR -->
+      <div class="stat-row">
+        <div class="stat-label"><span>💪 STR</span> <span style="font-size:0.7rem; color:#94a3b8;">(Melee ATK & Weight)</span></div>
+        <div class="stat-val-group">
+          <span class="stat-value" id="stat-str">32</span>
+          <button class="plus-stat-btn" onclick="addStat('str')">+</button>
+        </div>
+      </div>
+      <!-- AGI -->
+      <div class="stat-row">
+        <div class="stat-label"><span>⚡ AGI</span> <span style="font-size:0.7rem; color:#94a3b8;">(Attack Speed & Flee)</span></div>
+        <div class="stat-val-group">
+          <span class="stat-value" id="stat-agi">28</span>
+          <button class="plus-stat-btn" onclick="addStat('agi')">+</button>
+        </div>
+      </div>
+      <!-- VIT -->
+      <div class="stat-row">
+        <div class="stat-label"><span>❤️ VIT</span> <span style="font-size:0.7rem; color:#94a3b8;">(Max HP & Hard DEF)</span></div>
+        <div class="stat-val-group">
+          <span class="stat-value" id="stat-vit">40</span>
+          <button class="plus-stat-btn" onclick="addStat('vit')">+</button>
+        </div>
+      </div>
+      <!-- INT -->
+      <div class="stat-row">
+        <div class="stat-label"><span>🔮 INT</span> <span style="font-size:0.7rem; color:#94a3b8;">(MATK, Max MP & MDEF)</span></div>
+        <div class="stat-val-group">
+          <span class="stat-value" id="stat-int">20</span>
+          <button class="plus-stat-btn" onclick="addStat('int')">+</button>
+        </div>
+      </div>
+      <!-- DEX -->
+      <div class="stat-row">
+        <div class="stat-label"><span>🎯 DEX</span> <span style="font-size:0.7rem; color:#94a3b8;">(Hit Rate & Cast Speed)</span></div>
+        <div class="stat-val-group">
+          <span class="stat-value" id="stat-dex">25</span>
+          <button class="plus-stat-btn" onclick="addStat('dex')">+</button>
+        </div>
+      </div>
+      <!-- LUK -->
+      <div class="stat-row">
+        <div class="stat-label"><span>🍀 LUK</span> <span style="font-size:0.7rem; color:#94a3b8;">(CRIT Rate & Lucky Flee)</span></div>
+        <div class="stat-val-group">
+          <span class="stat-value" id="stat-luk">18</span>
+          <button class="plus-stat-btn" onclick="addStat('luk')">+</button>
+        </div>
+      </div>
+
+      <!-- Derived Preview -->
+      <div style="background: rgba(10,15,26,0.6); padding: 8px 12px; border-radius: 6px; margin-top: 10px; font-size: 0.75rem; display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+        <div>HIT: <strong style="color:#e2e8f0;" id="drv-hit">165</strong></div>
+        <div>FLEE: <strong style="color:#e2e8f0;" id="drv-flee">142</strong></div>
+        <div>CRIT: <strong style="color:var(--gold);" id="drv-crit">24%</strong></div>
+        <div>MATK: <strong style="color:var(--cobalt);" id="drv-matk">180~220</strong></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DRAGGABLE WINDOW: SKILLS TREE -->
+  <div class="window-panel glass-panel" id="win-skills" style="left: 350px; top: 130px; width: 380px;">
+    <div class="glass-titlebar" onmousedown="dragWindow(event, 'win-skills')">
+      <span>📖 SKILL TREE & MASTERY</span>
+      <span class="close-btn" onclick="toggleWindow('win-skills')">✕</span>
+    </div>
+    <div class="window-body">
+      <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 8px; color: var(--gold);">
+        <span>Job Skill Points: <strong id="free-skill-pts">4</strong></span>
+        <span style="color:#38bdf8;">Paladin Job Lv. 35</span>
+      </div>
+
+      <div class="skill-node-card">
+        <div class="skill-icon-frame">💥</div>
+        <div style="flex: 1;">
+          <div style="font-size: 0.85rem; font-weight: bold; color: #fca5a5;">Magnum Break [Lv. 10]</div>
+          <div style="font-size: 0.7rem; color: #94a3b8;">Unleashes radial fiery shockwave knocking back all surrounding enemies.</div>
+        </div>
+        <button class="plus-stat-btn">+</button>
+      </div>
+
+      <div class="skill-node-card">
+        <div class="skill-icon-frame">🗡️</div>
+        <div style="flex: 1;">
+          <div style="font-size: 0.85rem; font-weight: bold; color: #fde047;">Sonic Blow [Lv. 8/10]</div>
+          <div style="font-size: 0.7rem; color: #94a3b8;">8 rapid consecutive physical slashes with 40% stun chance.</div>
+        </div>
+        <button class="plus-stat-btn">+</button>
+      </div>
+
+      <div class="skill-node-card">
+        <div class="skill-icon-frame">✨</div>
+        <div style="flex: 1;">
+          <div style="font-size: 0.85rem; font-weight: bold; color: #c084fc;">Grand Cross [Lv. 5/10]</div>
+          <div style="font-size: 0.7rem; color: #94a3b8;">Summons holy cross of divine judgment devastating shadow & undead foes.</div>
+        </div>
+        <button class="plus-stat-btn">+</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DRAGGABLE WINDOW: WORLD MAP -->
+  <div class="window-panel glass-panel" id="win-map" style="left: 280px; top: 80px; width: 480px;">
+    <div class="glass-titlebar" onmousedown="dragWindow(event, 'win-map')">
+      <span>🗺️ WORLD MAP OF MIDGARD</span>
+      <span class="close-btn" onclick="toggleWindow('win-map')">✕</span>
+    </div>
+    <div class="window-body" style="text-align: center;">
+      <div style="position: relative; width: 100%; height: 260px; background: radial-gradient(circle, #1e293b, #090d16); border-radius: 8px; border: 1px solid rgba(56,189,248,0.3); overflow: hidden; display: flex; align-items: center; justify-content: center;">
+        <div style="font-size: 0.85rem; line-height: 1.8; text-align: left; padding: 20px;">
+          <div style="color: var(--gold); font-weight: bold;">🏛️ Midgard Central Fountain [Spawn & Safe Zone: (400, 300)]</div>
+          <div style="color: #38bdf8;">🌲 Whispering Forest (Poring & Drops Slimes)</div>
+          <div style="color: #94a3b8;">🏰 Ruined Ancient Fortress (Goblin Raiders)</div>
+          <div style="color: #f43f5e; font-weight: bold;">💀 Sunken Catacombs & MVP Boss [Golden Thief Bug]</div>
+        </div>
+      </div>
+      <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 8px;">Click anywhere on map or press [M] to close.</div>
+    </div>
+  </div>
+
+  <!-- DRAGGABLE WINDOW: PARTY MANAGEMENT -->
+  <div class="window-panel glass-panel" id="win-party" style="left: 260px; top: 140px; width: 340px;">
+    <div class="glass-titlebar" onmousedown="dragWindow(event, 'win-party')">
+      <span>👥 PARTY MANAGEMENT</span>
+      <span class="close-btn" onclick="toggleWindow('win-party')">✕</span>
+    </div>
+    <div class="window-body">
+      <div style="font-size: 0.8rem; color: #e2e8f0; margin-bottom: 8px;">Party Name: <strong>Valkyrie Vanguard</strong></div>
+      <div style="display: flex; flex-direction: column; gap: 6px; font-size: 0.75rem;">
+        <div style="padding: 6px 10px; background: rgba(15,23,42,0.6); border-radius: 6px; display: flex; justify-content: space-between;">
+          <span>EXP Sharing:</span>
+          <span style="color: var(--emerald); font-weight: bold;">Even Share (Active)</span>
+        </div>
+        <div style="padding: 6px 10px; background: rgba(15,23,42,0.6); border-radius: 6px; display: flex; justify-content: space-between;">
+          <span>Item Distribution:</span>
+          <span style="color: var(--gold); font-weight: bold;">Party Random</span>
+        </div>
+      </div>
+      <div style="margin-top: 14px; display: flex; gap: 8px;">
+        <button class="icon-btn" style="flex:1; justify-content:center;">➕ Invite</button>
+        <button class="icon-btn" style="flex:1; justify-content:center; border-color:var(--ruby); color:var(--ruby);">🚪 Leave</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ITEM HOVER TOOLTIP -->
+  <div id="item-tooltip">
+    <div class="tooltip-title" id="tt-title">Holy Excalibur +10</div>
+    <div class="tooltip-meta" id="tt-meta">Legendary One-Handed Sword</div>
+    <div class="tooltip-desc" id="tt-desc">Infused with divine holy light. ATK +185, Holy Element, 15% chance to cast Holy Light on hit.</div>
+  </div>
+
+  <!-- LEVEL UP & MVP BANNER -->
+  <div id="announcement-banner">
+    <div class="banner-title" id="banner-text">LEVEL UP!</div>
+    <div class="banner-sub" id="banner-sub">Reached Base Level 25 & Job Level 18!</div>
+  </div>
+
+</div>
+
+<script>
+/* =========================================================================
+   SYNTHESIZED WEB AUDIO SUITE (BGM + SFX)
+   ========================================================================= */
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+let bgmActive = false;
+let bgmInterval = null;
+
+function initAudio() {
+  if (!audioCtx) audioCtx = new AudioCtx();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+
+function toggleAudio() {
+  initAudio();
+  const btn = document.getElementById('audio-toggle-btn');
+  if (bgmActive) {
+    stopBGM();
+    btn.textContent = '🔇 BGM';
+    btn.classList.remove('active');
+  } else {
+    startBGM();
+    btn.textContent = '🔊 BGM';
+    btn.classList.add('active');
+  }
+}
+
+function startBGM() {
+  bgmActive = true;
+  let step = 0;
+  // Peaceful Midgard town arpeggio chord progression
+  const melody = [261.63, 329.63, 392.00, 523.25, 293.66, 369.99, 440.00, 587.33, 246.94, 329.63, 392.00, 493.88, 220.00, 261.63, 329.63, 440.00];
+  const bass = [130.81, 146.83, 123.47, 110.00];
+
+  bgmInterval = setInterval(() => {
+    if (!bgmActive || !audioCtx) return;
+    try {
+      const now = audioCtx.currentTime;
+      // Arp Note
+      const note = melody[step % melody.length];
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(note, now);
+      gain.gain.setValueAtTime(0.04, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.35);
+
+      // Bass note every 4 steps
+      if (step % 4 === 0) {
+        const bNote = bass[Math.floor(step / 4) % bass.length];
+        const bOsc = audioCtx.createOscillator();
+        const bGain = audioCtx.createGain();
+        bOsc.type = 'triangle';
+        bOsc.frequency.setValueAtTime(bNote, now);
+        bGain.gain.setValueAtTime(0.08, now);
+        bGain.gain.exponentialRampToValueAtTime(0.001, now + 0.9);
+        bOsc.connect(bGain);
+        bGain.connect(audioCtx.destination);
+        bOsc.start(now);
+        bOsc.stop(now + 0.9);
+      }
+      step++;
+    } catch(e) {}
+  }, 220);
+}
+
+function stopBGM() {
+  bgmActive = false;
+  if (bgmInterval) clearInterval(bgmInterval);
+}
+
+function playSfx(type) {
+  try {
+    initAudio();
+    const now = audioCtx.currentTime;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    if (type === 'slash') {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(450, now);
+      osc.frequency.exponentialRampToValueAtTime(80, now + 0.12);
+      gain.gain.setValueAtTime(0.3, now);
+      gain.gain.linearRampToValueAtTime(0.01, now + 0.12);
+      osc.start(now);
+      osc.stop(now + 0.12);
+    } else if (type === 'magnum') {
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(180, now);
+      osc.frequency.exponentialRampToValueAtTime(40, now + 0.3);
+      gain.gain.setValueAtTime(0.45, now);
+      gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+      osc.start(now);
+      osc.stop(now + 0.3);
+    } else if (type === 'holy') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(587.33, now);
+      osc.frequency.setValueAtTime(783.99, now + 0.08);
+      osc.frequency.setValueAtTime(987.77, now + 0.16);
+      gain.gain.setValueAtTime(0.28, now);
+      gain.gain.linearRampToValueAtTime(0.01, now + 0.35);
+      osc.start(now);
+      osc.stop(now + 0.35);
+    } else if (type === 'freeze') {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(800, now);
+      osc.frequency.exponentialRampToValueAtTime(200, now + 0.25);
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
+      osc.start(now);
+      osc.stop(now + 0.25);
+    } else if (type === 'coin') {
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(987.77, now);
+      osc.frequency.setValueAtTime(1318.51, now + 0.08);
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.linearRampToValueAtTime(0.01, now + 0.22);
+      osc.start(now);
+      osc.stop(now + 0.22);
+    } else if (type === 'potion') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(350, now);
+      osc.frequency.linearRampToValueAtTime(550, now + 0.15);
+      gain.gain.setValueAtTime(0.25, now);
+      gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+      osc.start(now);
+      osc.stop(now + 0.15);
+    } else if (type === 'levelup') {
+      // Fanfare
+      const notes = [523.25, 659.25, 783.99, 1046.50];
+      notes.forEach((freq, idx) => {
+        const fOsc = audioCtx.createOscillator();
+        const fGain = audioCtx.createGain();
+        fOsc.type = 'triangle';
+        fOsc.frequency.setValueAtTime(freq, now + idx * 0.1);
+        fGain.gain.setValueAtTime(0.3, now + idx * 0.1);
+        fGain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.1 + 0.4);
+        fOsc.connect(fGain);
+        fGain.connect(audioCtx.destination);
+        fOsc.start(now + idx * 0.1);
+        fOsc.stop(now + idx * 0.1 + 0.4);
+      });
+    } else if (type === 'roar') {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(80, now);
+      osc.frequency.linearRampToValueAtTime(50, now + 0.5);
+      gain.gain.setValueAtTime(0.5, now);
+      gain.gain.linearRampToValueAtTime(0.01, now + 0.5);
+      osc.start(now);
+      osc.stop(now + 0.5);
+    }
+  } catch(e) {}
+}
+
+/* =========================================================================
+   GAME ENGINE & STATE
+   ========================================================================= */
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const minimapCanvas = document.getElementById('minimap-canvas');
+const mmCtx = minimapCanvas.getContext('2d');
+
+const HERO_DATA = [
+  { name: 'Siegfried', title: 'Paladin', speed: 125, maxHp: 320, maxMp: 120, def: 18, dmg: 48, type: 'melee', sprite: 'knight', icon: '⚔️' },
+  { name: 'Ignis', title: 'Arch-Wizard', speed: 105, maxHp: 180, maxMp: 280, def: 6, dmg: 72, type: 'fireball', sprite: 'mage', icon: '🔮' },
+  { name: 'Lyra', title: 'Shadow Blade', speed: 155, maxHp: 220, maxMp: 150, def: 10, dmg: 54, type: 'dagger', sprite: 'rogue', icon: '🗡️' },
+  { name: 'Freya', title: 'High Priest', speed: 115, maxHp: 260, maxMp: 240, def: 12, dmg: 40, type: 'holy', sprite: 'cleric', icon: '✝️' }
+];
+
+let heroIdx = 0;
+
+// Player with guaranteed clear city center spawn (Central Fountain x: 400, y: 300)
+let player = {
+  name: 'Siegfried',
+  x: 400, y: 300,
+  footRadius: 9,
+  hp: 320, maxHp: 320,
+  mp: 120, maxMp: 120,
+  level: 1, xp: 0, xpNeeded: 120,
+  jobLevel: 1, jobXp: 0, jobXpNeeded: 80,
+  gold: 1250,
+  dir: 'down',
+  frame: 1,
+  animTimer: 0,
+  attackCooldown: 0,
+  invulnTimer: 0,
+  dead: false,
+  target: null,
+  activeEmote: null,
+  emoteTimer: 0,
+  speechBubble: null,
+  speechTimer: 0,
+  stats: { str: 32, agi: 28, vit: 40, int: 20, dex: 25, luk: 18 },
+  statPoints: 15,
+  skillPoints: 4,
+  potions: { hp: 12, mp: 8, ygg: 3, speed: 5 }
+};
+
+// Skill Cooldowns
+const skillCooldowns = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0 };
+const skillMaxCooldowns = { 1: 1.5, 2: 2.5, 3: 4.0, 4: 3.0, 5: 4.5, 6: 3.5, 7: 5.0, 8: 6.0 };
+
+// Load Sprites
+const images = {};
+const imgSources = {
+  knight: 'assets/knight.png',
+  mage: 'assets/mage.png',
+  rogue: 'assets/rogue.png',
+  cleric: 'assets/cleric.png',
+  slime_green: 'assets/slime_green.png',
+  slime_blue: 'assets/slime_blue.png',
+  slime_red: 'assets/slime_red.png',
+  goblin: 'assets/goblin.png',
+  skeleton: 'assets/skeleton.png',
+  tileset: 'assets/tileset.png',
+  fireball: 'assets/projectile_fireball.png',
+  holy: 'assets/projectile_holy.png',
+  potion_hp: 'assets/item_health_potion.png',
+  potion_mp: 'assets/item_mana_potion.png'
+};
+for (const [key, src] of Object.entries(imgSources)) {
+  images[key] = new Image();
+  images[key].src = src;
+}
+
+// Map Definition: 50x40 tiles of 32x32 = 1600x1280 px
+const MAP_W = 50, MAP_H = 40, TILE_SZ = 32;
+const walls = [];
+
+// Populate walls with clean central plaza (x: 200..600, y: 150..450 is wide clear)
+for (let y = 18; y < 38; y++) {
+  for (let x = 28; x < 48; x++) {
+    let isWall = (x === 28 || x === 47 || y === 18 || y === 37);
+    if (x === 38 && !(y === 24 || y === 25)) isWall = true;
+    if (y === 28 && !(x === 33 || x === 34 || x === 43 || x === 44)) isWall = true;
+    if (x === 28 && (y === 22 || y === 23)) isWall = false; // entrance
+    if (isWall) walls.push({ x: x * 32, y: y * 32, w: 32, h: 32, type: 'dungeon_wall' });
+  }
+}
+// Outer Boundaries
+for (let x = 0; x < MAP_W; x++) {
+  walls.push({ x: x * 32, y: 0, w: 32, h: 32, type: 'tree' });
+  walls.push({ x: x * 32, y: (MAP_H - 1) * 32, w: 32, h: 32, type: 'tree' });
+}
+for (let y = 1; y < MAP_H - 1; y++) {
+  walls.push({ x: 0, y: y * 32, w: 32, h: 32, type: 'tree' });
+  walls.push({ x: (MAP_W - 1) * 32, y: y * 32, w: 32, h: 32, type: 'tree' });
+}
+// Scattered Forest Trees (Strictly outside city plaza 300..500)
+const trees = [
+  {x: 100, y: 120}, {x: 150, y: 220}, {x: 200, y: 140},
+  {x: 120, y: 550}, {x: 220, y: 650}, {x: 150, y: 800},
+  {x: 650, y: 180}, {x: 720, y: 280}, {x: 680, y: 450},
+  {x: 750, y: 600}, {x: 820, y: 450}
+];
+trees.forEach(t => walls.push({ x: t.x, y: t.y, w: 32, h: 32, type: 'tree' }));
+
+// NPCs in Midgard Plaza
+let npcs = [
+  { name: 'Kafra Employee', role: 'Storage & Warp', x: 340, y: 270, sprite: 'cleric', text: 'Welcome to Midgard! Storage is secure.' },
+  { name: 'Weapon Blacksmith', role: 'Refining', x: 470, y: 260, sprite: 'knight', text: 'Need your blade tempered with Oridecon?' },
+  { name: 'Potion Merchant', role: 'Alchemist', x: 370, y: 360, sprite: 'mage', text: 'Red Potions, Blue Potions brewed fresh!' }
+];
+
+// Party Members companion wanderers
+let companions = [
+  { id: 1, name: 'Freya', job: 'High Priest', sprite: 'cleric', x: 380, y: 320, hp: 240, maxHp: 260, mp: 210, maxMp: 240, dir: 'down', frame: 1, animTimer: 0 },
+  { id: 2, name: 'Ignis', job: 'Arch-Wizard', sprite: 'mage', x: 430, y: 290, hp: 160, maxHp: 180, mp: 260, maxMp: 280, dir: 'down', frame: 1, animTimer: 0 },
+  { id: 3, name: 'Lyra', job: 'Shadow Blade', sprite: 'rogue', x: 420, y: 330, hp: 200, maxHp: 220, mp: 130, maxMp: 150, dir: 'down', frame: 1, animTimer: 0 }
+];
+
+// Monsters + MVP Boss
+let enemies = [
+  // Forest Slimes
+  { id: 'm1', type: 'slime_green', name: 'Poring Slime', element: '💧 Water', x: 180, y: 300, hp: 45, maxHp: 45, dmg: 8, speed: 45, xp: 35, gold: 12, dir: 'down', frame: 0, animTimer: 0, isMvp: false },
+  { id: 'm2', type: 'slime_blue',  name: 'Drops Slime', element: '🔥 Fire',  x: 240, y: 480, hp: 60, maxHp: 60, dmg: 12, speed: 50, xp: 45, gold: 18, dir: 'down', frame: 0, animTimer: 0, isMvp: false },
+  { id: 'm3', type: 'slime_green', name: 'Poring Slime', element: '💧 Water', x: 150, y: 650, hp: 45, maxHp: 45, dmg: 8, speed: 45, xp: 35, gold: 12, dir: 'down', frame: 0, animTimer: 0, isMvp: false },
+  // Dungeon Goblins & Skeletons
+  { id: 'm4', type: 'goblin',      name: 'Goblin Raider', element: '🪨 Earth', x: 980, y: 640, hp: 95, maxHp: 95, dmg: 22, speed: 65, xp: 75, gold: 45, dir: 'down', frame: 0, animTimer: 0, isMvp: false },
+  { id: 'm5', type: 'skeleton',    name: 'Soldier Skeleton', element: '💀 Shadow', x: 1220, y: 720, hp: 140, maxHp: 140, dmg: 30, speed: 55, xp: 110, gold: 65, dir: 'down', frame: 0, animTimer: 0, isMvp: false },
+  { id: 'm6', type: 'slime_red',   name: 'Magma Slime', element: '🔥 Fire', x: 1350, y: 920, hp: 120, maxHp: 120, dmg: 26, speed: 58, xp: 90, gold: 50, dir: 'down', frame: 0, animTimer: 0, isMvp: false },
+  { id: 'm7', type: 'skeleton',    name: 'Arch Skeleton', element: '💀 Shadow', x: 1150, y: 1050, hp: 150, maxHp: 150, dmg: 32, speed: 52, xp: 120, gold: 75, dir: 'down', frame: 0, animTimer: 0, isMvp: false },
+  // 👑 MVP BOSS: Golden Thief Bug (Deep in Catacombs)
+  { id: 'mvp1', type: 'goblin', name: '👑 MVP Golden Thief Bug', element: '🔥 Fire', x: 1360, y: 1080, hp: 650, maxHp: 650, dmg: 48, speed: 70, xp: 850, gold: 600, dir: 'down', frame: 0, animTimer: 0, isMvp: true }
+];
+
+let chests = [
+  { x: 160, y: 200, opened: false, gold: 75 },
+  { x: 620, y: 160, opened: false, gold: 120 },
+  { x: 1400, y: 620, opened: false, gold: 220 },
+  { x: 1420, y: 1120, opened: false, gold: 500 }
+];
+
+let projectiles = [];
+let particles = [];
+let damageNumbers = [];
+let pickups = [];
+
+/* =========================================================================
+   INVENTORY ITEMS DATA
+   ========================================================================= */
+const INVENTORY_ITEMS = [
+  { id: 1, name: 'Holy Excalibur +10', icon: '⚔️', type: 'Weapon', rarity: 'legendary', desc: 'ATK +185, Holy Element, +15% Holy Light dmg' },
+  { id: 2, name: 'Valkyrie Helm', icon: '👑', type: 'Headgear', rarity: 'epic', desc: 'DEF +45, Max HP +200, All Stats +3' },
+  { id: 3, name: 'Mirror Shield +7', icon: '🛡️', type: 'Shield', rarity: 'rare', desc: 'DEF +38, 20% Magic Reflection' },
+  { id: 4, name: 'Dragon Plate +9', icon: '🥋', type: 'Armor', rarity: 'epic', desc: 'DEF +65, Fire Resistance +30%' },
+  { id: 5, name: 'Angelic Cloak', icon: '🧥', type: 'Garment', rarity: 'rare', desc: 'FLEE +25, Neutral Dmg -10%' },
+  { id: 6, name: 'Hermes Greaves', icon: '👢', type: 'Boots', rarity: 'rare', desc: 'Move Speed +20%, AGI +5' },
+  { id: 7, name: 'Ring of the MVP', icon: '💍', type: 'Accessory', rarity: 'legendary', desc: 'CRIT +15%, Boss Dmg +25%' },
+  { id: 8, name: 'Rosary of Light', icon: '📿', type: 'Accessory', rarity: 'uncommon', desc: 'LUK +4, MDEF +5' },
+  { id: 9, name: 'Red Potion', icon: '🧪', count: 12, type: 'Potion', rarity: 'common', desc: 'Restores 60 HP upon drinking' },
+  { id: 10, name: 'Blue Potion', icon: '💧', count: 8, type: 'Potion', rarity: 'common', desc: 'Restores 50 MP upon drinking' },
+  { id: 11, name: 'Yggdrasil Berry', icon: '🍇', count: 3, type: 'Consumable', rarity: 'legendary', desc: 'Fully restores HP and MP!' },
+  { id: 12, name: 'Awakening Potion', icon: '⚡', count: 5, type: 'Potion', rarity: 'uncommon', desc: 'Increases ASPD by 30% for 20 seconds' },
+  { id: 13, name: 'Jellopy', icon: '💎', count: 42, type: 'Etc', rarity: 'common', desc: 'Sticky monster drop useful for crafting' },
+  { id: 14, name: 'Oridecon Ore', icon: '💠', count: 6, type: 'Refine', rarity: 'rare', desc: 'Pure metal used to upgrade Lv.3/4 weapons' },
+  { id: 15, name: 'Golden Thief Bug Card', icon: '🃏', count: 1, type: 'Card', rarity: 'legendary', desc: 'Grants complete immunity to magic attacks!' }
+];
+
+function renderInventoryGrid() {
+  const grid = document.getElementById('inv-grid');
+  grid.innerHTML = '';
+  for (let i = 0; i < 36; i++) {
+    const item = INVENTORY_ITEMS[i];
+    const slotDiv = document.createElement('div');
+    slotDiv.className = 'inv-slot';
+    if (item) {
+      slotDiv.innerHTML = `<span>${item.icon}</span>${item.count ? `<span class="item-count">${item.count}</span>` : ''}`;
+      slotDiv.onmouseenter = (e) => showTooltip(e, item);
+      slotDiv.onmouseleave = hideTooltip;
+      slotDiv.onclick = () => useInventoryItem(item);
+    }
+    grid.appendChild(slotDiv);
+  }
+}
+renderInventoryGrid();
+
+function showTooltip(e, item) {
+  const tt = document.getElementById('item-tooltip');
+  document.getElementById('tt-title').textContent = item.name;
+  document.getElementById('tt-meta').textContent = `${item.rarity.toUpperCase()} | ${item.type}`;
+  document.getElementById('tt-desc').textContent = item.desc;
+  tt.style.display = 'block';
+  tt.style.left = (e.clientX + 15) + 'px';
+  tt.style.top = (e.clientY + 15) + 'px';
+}
+function hideTooltip() {
+  document.getElementById('item-tooltip').style.display = 'none';
+}
+
+function useInventoryItem(item) {
+  if (item.name.includes('Red Potion')) usePotion('hp');
+  else if (item.name.includes('Blue Potion')) usePotion('mp');
+  else if (item.name.includes('Yggdrasil')) usePotion('ygg');
+  else if (item.name.includes('Awakening')) usePotion('speed');
+  else {
+    addChatMessage('system', `Equipped [${item.name}]! Stats updated.`);
+    playSfx('coin');
+  }
+}
+
+/* =========================================================================
+   INPUT & KEYBOARD HANDLING
+   ========================================================================= */
+const keys = {};
+window.addEventListener('keydown', e => {
+  // If typing in chat input, only catch Enter/Escape
+  if (document.activeElement === document.getElementById('chat-input')) {
+    if (e.key === 'Escape') document.getElementById('chat-input').blur();
+    return;
+  }
+
+  keys[e.code] = true;
+  keys[e.key.toLowerCase()] = true;
+
+  if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab'].includes(e.code)) {
+    e.preventDefault();
+  }
+
+  // Windows Shortcuts
+  if (e.key === 'i' || e.key === 'I') toggleWindow('win-inv');
+  if (e.key === 'c' || e.key === 'C') toggleWindow('win-stats');
+  if (e.key === 'k' || e.key === 'K') toggleWindow('win-skills');
+  if (e.key === 'p' || e.key === 'P') toggleWindow('win-party');
+  if (e.key === 'm' || e.key === 'M') toggleWindow('win-map');
+
+  // Hero Switch
+  if (e.key === 'Tab') {
+    switchHero((heroIdx + 1) % 4);
+  }
+
+  // Skills (1-8)
+  if (e.key >= '1' && e.key <= '8') {
+    castSkill(parseInt(e.key));
+  }
+
+  // Potions (F1-F4)
+  if (e.key === 'F1') { e.preventDefault(); usePotion('hp'); }
+  if (e.key === 'F2') { e.preventDefault(); usePotion('mp'); }
+  if (e.key === 'F3') { e.preventDefault(); usePotion('ygg'); }
+  if (e.key === 'F4') { e.preventDefault(); usePotion('speed'); }
+
+  // Chat focus
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    document.getElementById('chat-input').focus();
+  }
+
+  // Interact E
+  if (e.key === 'e' || e.key === 'E') {
+    tryInteract();
+  }
+});
+
+window.addEventListener('keyup', e => {
+  keys[e.code] = false;
+  keys[e.key.toLowerCase()] = false;
+});
+
+// Canvas click targeting
+canvas.addEventListener('mousedown', e => {
+  const rect = canvas.getBoundingClientRect();
+  const mouseX = (e.clientX - rect.left) * (canvas.width / rect.width);
+  const mouseY = (e.clientY - rect.top) * (canvas.height / rect.height);
+  const worldX = mouseX - canvas.width / 2 + player.x;
+  const worldY = mouseY - canvas.height / 2 + player.y;
+
+  // Check enemy click
+  let clickedEnemy = null;
+  enemies.forEach(en => {
+    if (en.hp > 0 && Math.hypot(en.x - worldX, en.y - worldY) < 28) {
+      clickedEnemy = en;
+    }
+  });
+
+  if (clickedEnemy) {
+    setTarget(clickedEnemy);
+  } else {
+    // Attack towards mouse
+    const hero = HERO_DATA[heroIdx];
+    executePlayerAttack(hero);
+  }
+});
+
+function setTarget(enemy) {
+  player.target = enemy;
+  const tf = document.getElementById('target-frame');
+  tf.classList.add('active');
+  document.getElementById('target-name').textContent = enemy.name;
+  document.getElementById('target-element').textContent = enemy.element;
+  document.getElementById('target-img').src = images[enemy.type] ? images[enemy.type].src : '';
+  updateTargetHUD();
+}
+
+function updateTargetHUD() {
+  if (!player.target || player.target.hp <= 0) {
+    document.getElementById('target-frame').classList.remove('active');
+    player.target = null;
+    return;
+  }
+  const pct = Math.max(0, Math.round((player.target.hp / player.target.maxHp) * 100));
+  document.getElementById('target-hp-bar').style.width = pct + '%';
+  document.getElementById('target-hp-text').textContent = `${player.target.hp} / ${player.target.maxHp} (${pct}%)`;
+}
+
+function switchHero(idx) {
+  heroIdx = idx;
+  const h = HERO_DATA[heroIdx];
+  player.maxHp = h.maxHp + (player.level - 1) * 25 + player.stats.vit * 4;
+  player.maxMp = h.maxMp + (player.level - 1) * 15 + player.stats.int * 3;
+  player.hp = Math.min(player.maxHp, player.hp);
+  player.mp = Math.min(player.maxMp, player.mp);
+
+  document.getElementById('hud-hero-name').textContent = h.name;
+  document.getElementById('hud-hero-job').textContent = h.title;
+  document.getElementById('player-avatar-img').src = `assets/${h.sprite}.png`;
+  addChatMessage('party', `Switched active party leader to [${h.name} - ${h.title}]!`);
+  playSfx('holy');
+}
+
+/* =========================================================================
+   PHYSICS & SMOOTH SLIDING COLLISION
+   ========================================================================= */
+function checkCollision(x, y, radius) {
+  for (const w of walls) {
+    // Circle vs Axis-Aligned Bounding Box (AABB)
+    const closestX = Math.max(w.x, Math.min(x, w.x + w.w));
+    const closestY = Math.max(w.y, Math.min(y, w.y + w.h));
+    const distX = x - closestX;
+    const distY = y - closestY;
+    if ((distX * distX + distY * distY) < (radius * radius)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function tryInteract() {
+  // Chests
+  chests.forEach(c => {
+    if (!c.opened && Math.hypot(player.x - c.x, player.y - c.y) < 45) {
+      c.opened = true;
+      player.gold += c.gold;
+      player.hp = Math.min(player.maxHp, player.hp + 60);
+      playSfx('coin');
+      damageNumbers.push({ text: `+${c.gold} Gold`, x: c.x, y: c.y - 15, color: '#fbbf24', life: 1.2 });
+      damageNumbers.push({ text: `+60 HP`, x: c.x, y: c.y - 30, color: '#34d399', life: 1.2 });
+      addChatMessage('system', `Opened treasure chest! Obtained ${c.gold} Gold!`);
+    }
+  });
+
+  // NPCs
+  npcs.forEach(n => {
+    if (Math.hypot(player.x - n.x, player.y - n.y) < 50) {
+      addChatMessage('whisper', `[${n.name}]: "${n.text}"`);
+      playSfx('holy');
+    }
+  });
+}
+
+/* =========================================================================
+   COMBAT & SKILLS SYSTEM
+   ========================================================================= */
+function castSkill(slotNum) {
+  if (player.dead) return;
+  if (skillCooldowns[slotNum] > 0) return;
+
+  const slotEl = document.getElementById(`slot-${slotNum}`);
+  if (slotEl) {
+    slotEl.classList.add('active-press');
+    setTimeout(() => slotEl.classList.remove('active-press'), 150);
+  }
+
+  const dirVecs = { down: [0, 1], up: [0, -1], left: [-1, 0], right: [1, 0] };
+  const [dx, dy] = dirVecs[player.dir];
+
+  switch(slotNum) {
+    case 1: // Magnum Break (Fire AoE)
+      if (player.mp < 10) return;
+      player.mp -= 10;
+      skillCooldowns[1] = skillMaxCooldowns[1];
+      playSfx('magnum');
+      spawnParticles(player.x, player.y, '#f97316', 16);
+      damageNumbers.push({ text: 'MAGNUM BREAK!', x: player.x, y: player.y - 30, color: '#f97316', life: 1 });
+      enemies.forEach(e => {
+        if (e.hp > 0 && Math.hypot(player.x - e.x, player.y - e.y) < 95) {
+          damageEnemy(e, 75, e.x - player.x, e.y - player.y);
+        }
+      });
+      break;
+
+    case 2: // Sonic Blow (Physical Burst)
+      if (player.mp < 15) return;
+      player.mp -= 15;
+      skillCooldowns[2] = skillMaxCooldowns[2];
+      playSfx('slash');
+      damageNumbers.push({ text: 'SONIC BLOW!', x: player.x, y: player.y - 30, color: '#fde047', life: 1 });
+      // Rush towards facing
+      player.x += dx * 40;
+      player.y += dy * 40;
+      enemies.forEach(e => {
+        if (e.hp > 0 && Math.hypot(player.x - e.x, player.y - e.y) < 60) {
+          damageEnemy(e, 110, dx, dy);
+        }
+      });
+      break;
+
+    case 3: // Meteor Storm (Fireball Cascade)
+      if (player.mp < 25) return;
+      player.mp -= 25;
+      skillCooldowns[3] = skillMaxCooldowns[3];
+      playSfx('magnum');
+      damageNumbers.push({ text: 'METEOR STORM!', x: player.x, y: player.y - 30, color: '#ef4444', life: 1 });
+      for (let i = -1; i <= 1; i++) {
+        projectiles.push({
+          x: player.x + dx * 20, y: player.y + dy * 20,
+          vx: (dx + i * 0.3) * 260, vy: (dy + i * 0.3) * 260,
+          dmg: 90, type: 'fireball', life: 1.8
+        });
+      }
+      break;
+
+    case 4: // Frost Nova (Blizzard Freeze)
+      if (player.mp < 20) return;
+      player.mp -= 20;
+      skillCooldowns[4] = skillMaxCooldowns[4];
+      playSfx('freeze');
+      spawnParticles(player.x, player.y, '#38bdf8', 20);
+      damageNumbers.push({ text: 'FROST NOVA!', x: player.x, y: player.y - 30, color: '#38bdf8', life: 1 });
+      enemies.forEach(e => {
+        if (e.hp > 0 && Math.hypot(player.x - e.x, player.y - e.y) < 110) {
+          damageEnemy(e, 85, 0, 0);
+          e.speed = Math.max(15, e.speed - 20); // Slow
+        }
+      });
+      break;
+
+    case 5: // Holy Judgement (Laser Beam)
+      if (player.mp < 30) return;
+      player.mp -= 30;
+      skillCooldowns[5] = skillMaxCooldowns[5];
+      playSfx('holy');
+      damageNumbers.push({ text: 'GRAND CROSS!', x: player.x, y: player.y - 30, color: '#c084fc', life: 1.2 });
+      spawnParticles(player.x, player.y, '#e0e7ff', 24);
+      enemies.forEach(e => {
+        if (e.hp > 0 && Math.hypot(player.x - e.x, player.y - e.y) < 130) {
+          const dmgBonus = (e.element === '💀 Shadow' || e.isMvp) ? 180 : 120;
+          damageEnemy(e, dmgBonus, e.x - player.x, e.y - player.y);
+        }
+      });
+      break;
+
+    case 6: // High Heal & Blessing
+      if (player.mp < 20) return;
+      player.mp -= 20;
+      skillCooldowns[6] = skillMaxCooldowns[6];
+      playSfx('holy');
+      player.hp = Math.min(player.maxHp, player.hp + 90);
+      damageNumbers.push({ text: '+90 HP [Heal]', x: player.x, y: player.y - 25, color: '#34d399', life: 1.2 });
+      companions.forEach(c => {
+        c.hp = Math.min(c.maxHp, c.hp + 80);
+      });
+      addChatMessage('party', `Freya: "Blessing and Agility Up active on all members!"`);
+      break;
+
+    case 7: // Provoke & War Cry
+      if (player.mp < 15) return;
+      player.mp -= 15;
+      skillCooldowns[7] = skillMaxCooldowns[7];
+      playSfx('roar');
+      damageNumbers.push({ text: 'WAR CRY! ATK+30%', x: player.x, y: player.y - 25, color: '#fbbf24', life: 1.2 });
+      enemies.forEach(e => {
+        if (e.hp > 0 && Math.hypot(player.x - e.x, player.y - e.y) < 180) {
+          e.target = player;
+        }
+      });
+      break;
+
+    case 8: // Lord of Vermilion (Lightning Tempest)
+      if (player.mp < 40) return;
+      player.mp -= 40;
+      skillCooldowns[8] = skillMaxCooldowns[8];
+      playSfx('magnum');
+      damageNumbers.push({ text: 'LORD OF VERMILION!', x: player.x, y: player.y - 35, color: '#fde047', life: 1.5 });
+      spawnParticles(player.x, player.y, '#fde047', 30);
+      enemies.forEach(e => {
+        if (e.hp > 0 && Math.hypot(player.x - e.x, player.y - e.y) < 160) {
+          damageEnemy(e, 160, 0, 0);
+        }
+      });
+      break;
+  }
+}
+
+function executePlayerAttack(hero) {
+  if (player.attackCooldown > 0) return;
+  player.attackCooldown = 0.32;
+  player.frame = 3;
+
+  const dirVecs = { down: [0, 1], up: [0, -1], left: [-1, 0], right: [1, 0] };
+  const [dx, dy] = dirVecs[player.dir];
+
+  if (hero.type === 'melee' || hero.type === 'dagger') {
+    playSfx('slash');
+    const range = hero.type === 'melee' ? 44 : 50;
+    const hx = player.x + dx * range;
+    const hy = player.y + dy * range;
+    enemies.forEach(e => {
+      if (e.hp > 0 && Math.hypot(hx - e.x, hy - e.y) < 36) {
+        damageEnemy(e, hero.dmg, dx, dy);
+        setTarget(e);
+      }
+    });
+  } else if (hero.type === 'fireball') {
+    if (player.mp >= 10) {
+      player.mp -= 10;
+      playSfx('magnum');
+      projectiles.push({
+        x: player.x + dx * 16, y: player.y + dy * 16,
+        vx: dx * 280, vy: dy * 280,
+        dmg: hero.dmg, type: 'fireball', life: 2.0
+      });
+    }
+  } else if (hero.type === 'holy') {
+    if (player.mp >= 15) {
+      player.mp -= 15;
+      player.hp = Math.min(player.maxHp, player.hp + 30);
+      playSfx('holy');
+      damageNumbers.push({ text: `+30 HP`, x: player.x, y: player.y - 20, color: '#34d399', life: 0.8 });
+      enemies.forEach(e => {
+        if (e.hp > 0 && Math.hypot(player.x - e.x, player.y - e.y) < 90) {
+          damageEnemy(e, hero.dmg, e.x - player.x, e.y - player.y);
+          setTarget(e);
+        }
+      });
+    }
+  }
+}
+
+function damageEnemy(e, dmg, kx, ky) {
+  e.hp -= dmg;
+  playSfx('slash');
+  const len = Math.hypot(kx, ky) || 1;
+  e.x += (kx / len) * 14;
+  e.y += (ky / len) * 14;
+  damageNumbers.push({ text: `${dmg}`, x: e.x, y: e.y - 12, color: e.isMvp ? '#f43f5e' : '#fde047', life: 0.9 });
+  updateTargetHUD();
+
+  if (e.hp <= 0) {
+    player.gold += e.gold;
+    player.xp += e.xp;
+    player.jobXp += Math.round(e.xp * 0.7);
+
+    if (e.isMvp) {
+      playSfx('levelup');
+      showAnnouncement('MVP DEFEATED!', `You and party conquered ${e.name}! (+${e.gold}G, +${e.xp} EXP)`);
+      addChatMessage('mvp', `👑 [MVP VICTORY]: ${e.name} was slain by ${player.name} & party!`);
+      // Fountain of loot
+      for (let i = 0; i < 6; i++) {
+        pickups.push({ x: e.x + (Math.random() - 0.5) * 50, y: e.y + (Math.random() - 0.5) * 50, type: i % 2 === 0 ? 'hp' : 'mp' });
+      }
+    } else {
+      addChatMessage('system', `Defeated [${e.name}]! +${e.xp} EXP, +${e.gold} Gold.`);
+      if (Math.random() < 0.6) {
+        pickups.push({ x: e.x, y: e.y, type: Math.random() < 0.6 ? 'hp' : 'mp' });
+      }
+    }
+
+    // Check Level Up
+    if (player.xp >= player.xpNeeded) {
+      player.xp -= player.xpNeeded;
+      player.level += 1;
+      player.xpNeeded = Math.round(player.xpNeeded * 1.4);
+      player.statPoints += 5;
+      player.maxHp += 25;
+      player.maxMp += 15;
+      player.hp = player.maxHp;
+      player.mp = player.maxMp;
+      playSfx('levelup');
+      showAnnouncement(`LEVEL UP! Lv. ${player.level}`, 'Gained +5 Stat Points & +1 Skill Point!');
+      damageNumbers.push({ text: `LEVEL UP! Lv.${player.level}`, x: player.x, y: player.y - 30, color: '#fbbf24', life: 1.8 });
+    }
+    if (player.jobXp >= player.jobXpNeeded) {
+      player.jobXp -= player.jobXpNeeded;
+      player.jobLevel += 1;
+      player.jobXpNeeded = Math.round(player.jobXpNeeded * 1.35);
+      player.skillPoints += 1;
+    }
+  }
+}
+
+function usePotion(type) {
+  if (type === 'hp') {
+    if (player.potions.hp <= 0) return;
+    player.potions.hp--;
+    player.hp = Math.min(player.maxHp, player.hp + 60);
+    playSfx('potion');
+    damageNumbers.push({ text: '+60 HP', x: player.x, y: player.y - 20, color: '#34d399', life: 0.8 });
+  } else if (type === 'mp') {
+    if (player.potions.mp <= 0) return;
+    player.potions.mp--;
+    player.mp = Math.min(player.maxMp, player.mp + 50);
+    playSfx('potion');
+    damageNumbers.push({ text: '+50 MP', x: player.x, y: player.y - 20, color: '#38bdf8', life: 0.8 });
+  } else if (type === 'ygg') {
+    if (player.potions.ygg <= 0) return;
+    player.potions.ygg--;
+    player.hp = player.maxHp;
+    player.mp = player.maxMp;
+    playSfx('holy');
+    damageNumbers.push({ text: 'FULL RESTORE!', x: player.x, y: player.y - 25, color: '#fbbf24', life: 1.2 });
+  } else if (type === 'speed') {
+    if (player.potions.speed <= 0) return;
+    player.potions.speed--;
+    playSfx('potion');
+    damageNumbers.push({ text: 'SPEED UP +30%!', x: player.x, y: player.y - 20, color: '#fde047', life: 1.0 });
+  }
+  document.getElementById('hp-pot-count').textContent = player.potions.hp;
+  document.getElementById('mp-pot-count').textContent = player.potions.mp;
+}
+
+function spawnParticles(x, y, color, count = 12) {
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 40 + Math.random() * 80;
+    particles.push({
+      x: x, y: y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      color: color,
+      life: 0.4 + Math.random() * 0.3,
+      size: 2 + Math.random() * 3
+    });
+  }
+}
+
+function showAnnouncement(title, sub) {
+  const banner = document.getElementById('announcement-banner');
+  document.getElementById('banner-text').textContent = title;
+  document.getElementById('banner-sub').textContent = sub;
+  banner.style.display = 'flex';
+  setTimeout(() => { banner.style.display = 'none'; }, 2600);
+}
+
+/* =========================================================================
+   UI WINDOWS & CHAT SYSTEM
+   ========================================================================= */
+function toggleWindow(id) {
+  const win = document.getElementById(id);
+  win.classList.toggle('open');
+  if (id === 'win-stats') updateStatsUI();
+  playSfx('coin');
+}
+function openWindow(id) {
+  document.getElementById(id).classList.add('open');
+}
+
+function toggleEmotes() {
+  document.getElementById('emote-picker').classList.toggle('active');
+}
+
+function triggerEmote(symbol) {
+  player.activeEmote = symbol;
+  player.emoteTimer = 3.0;
+  document.getElementById('emote-picker').classList.remove('active');
+  playSfx('coin');
+}
+
+function handleChatKey(e) {
+  if (e.key === 'Enter') {
+    const input = document.getElementById('chat-input');
+    const txt = input.value.trim();
+    if (txt) {
+      if (txt.startsWith('/')) {
+        // Emote shortcut
+        const cmd = txt.toLowerCase();
+        if (cmd === '/heart' || cmd === '/love') triggerEmote('❤️');
+        else if (cmd === '/omg' || cmd === '/help') triggerEmote('❗');
+        else if (cmd === '/what' || cmd === '/?') triggerEmote('❓');
+        else if (cmd === '/sleep' || cmd === '/zzz') triggerEmote('💤');
+        else if (cmd === '/sword' || cmd === '/pvp') triggerEmote('⚔️');
+        else if (cmd === '/gold' || cmd === '/rich') triggerEmote('💰');
+        else if (cmd === '/fire' || cmd === '/rage') triggerEmote('🔥');
+        else if (cmd === '/shine' || cmd === '/gg') triggerEmote('✨');
+      } else {
+        addChatMessage('all', `[${player.name}]: ${txt}`);
+        player.speechBubble = txt;
+        player.speechTimer = 4.0;
+      }
+      input.value = '';
+    }
+    input.blur();
+  }
+}
+
+function addChatMessage(channel, text) {
+  const box = document.getElementById('chat-msgs');
+  const msg = document.createElement('div');
+  msg.className = `chat-msg ${channel}`;
+  msg.textContent = text;
+  box.appendChild(msg);
+  box.scrollTop = box.scrollHeight;
+}
+
+function setChatTab(tab) {
+  document.querySelectorAll('.chat-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+function addStat(statKey) {
+  if (player.statPoints <= 0) return;
+  player.statPoints--;
+  player.stats[statKey]++;
+  if (statKey === 'vit') player.maxHp += 8;
+  if (statKey === 'int') player.maxMp += 6;
+  updateStatsUI();
+  playSfx('coin');
+}
+
+function updateStatsUI() {
+  document.getElementById('free-stat-pts').textContent = player.statPoints;
+  document.getElementById('stat-str').textContent = player.stats.str;
+  document.getElementById('stat-agi').textContent = player.stats.agi;
+  document.getElementById('stat-vit').textContent = player.stats.vit;
+  document.getElementById('stat-int').textContent = player.stats.int;
+  document.getElementById('stat-dex').textContent = player.stats.dex;
+  document.getElementById('stat-luk').textContent = player.stats.luk;
+
+  document.getElementById('drv-hit').textContent = 140 + player.stats.dex * 2;
+  document.getElementById('drv-flee').textContent = 110 + player.stats.agi * 2;
+  document.getElementById('drv-crit').textContent = (10 + Math.floor(player.stats.luk * 0.4)) + '%';
+  document.getElementById('drv-matk').textContent = `${120 + player.stats.int * 3}~${160 + player.stats.int * 4}`;
+}
+
+// Window Dragging Utility
+let activeDragWin = null;
+let dragOffset = { x: 0, y: 0 };
+function dragWindow(e, winId) {
+  activeDragWin = document.getElementById(winId);
+  const rect = activeDragWin.getBoundingClientRect();
+  dragOffset.x = e.clientX - rect.left;
+  dragOffset.y = e.clientY - rect.top;
+}
+window.addEventListener('mousemove', e => {
+  if (activeDragWin) {
+    activeDragWin.style.left = Math.max(10, e.clientX - dragOffset.x) + 'px';
+    activeDragWin.style.top = Math.max(10, e.clientY - dragOffset.y) + 'px';
+  }
+});
+window.addEventListener('mouseup', () => { activeDragWin = null; });
+
+/* =========================================================================
+   MAIN GAME LOOP & RENDER PIPELINE
+   ========================================================================= */
+let lastTime = performance.now();
+
+function update(dt) {
+  if (player.dead) return;
+
+  const hero = HERO_DATA[heroIdx];
+
+  // Cooldowns
+  for (let k in skillCooldowns) {
+    if (skillCooldowns[k] > 0) {
+      skillCooldowns[k] -= dt;
+      const cdEl = document.getElementById(`cd-${k}`);
+      if (cdEl) {
+        if (skillCooldowns[k] > 0) {
+          cdEl.style.display = 'flex';
+          cdEl.textContent = skillCooldowns[k].toFixed(1) + 's';
+        } else {
+          cdEl.style.display = 'none';
+        }
+      }
+    }
+  }
+
+  if (player.attackCooldown > 0) player.attackCooldown -= dt;
+  if (player.invulnTimer > 0) player.invulnTimer -= dt;
+  if (player.emoteTimer > 0) player.emoteTimer -= dt;
+  if (player.speechTimer > 0) player.speechTimer -= dt;
+
+  // MP Regen
+  player.mp = Math.min(player.maxMp, player.mp + (6 + player.stats.int * 0.2) * dt);
+
+  // Smooth Movement with Soft Circular Foot Physics & Wall Sliding
+  let mx = 0, my = 0;
+  if (keys['KeyW'] || keys['ArrowUp'] || keys['w']) my -= 1;
+  if (keys['KeyS'] || keys['ArrowDown'] || keys['s']) my += 1;
+  if (keys['KeyA'] || keys['ArrowLeft'] || keys['a']) mx -= 1;
+  if (keys['KeyD'] || keys['ArrowRight'] || keys['d']) mx += 1;
+
+  if (mx !== 0 || my !== 0) {
+    const len = Math.hypot(mx, my);
+    mx /= len; my /= len;
+
+    if (Math.abs(mx) > Math.abs(my)) player.dir = mx > 0 ? 'right' : 'left';
+    else player.dir = my > 0 ? 'down' : 'up';
+
+    const currentSpeed = hero.speed + player.stats.agi * 0.5;
+    const nextX = player.x + mx * currentSpeed * dt;
+    const nextY = player.y + my * currentSpeed * dt;
+
+    // Separate Axis sliding check
+    if (!checkCollision(nextX, player.y + 6, player.footRadius)) {
+      player.x = nextX;
+    }
+    if (!checkCollision(player.x, nextY + 6, player.footRadius)) {
+      player.y = nextY;
+    }
+
+    player.animTimer += dt * 8;
+    const walkSeq = [0, 1, 2, 1];
+    player.frame = walkSeq[Math.floor(player.animTimer) % 4];
+  } else {
+    player.frame = 1;
+  }
+
+  // Companions follow player
+  companions.forEach((comp, idx) => {
+    const targetX = player.x - (idx + 1) * 26 * (player.dir === 'left' ? -1 : 1);
+    const targetY = player.y + (idx + 1) * 12;
+    const dist = Math.hypot(comp.x - targetX, comp.y - targetY);
+    if (dist > 35) {
+      const cdx = (targetX - comp.x) / dist;
+      const cdy = (targetY - comp.y) / dist;
+      comp.x += cdx * 110 * dt;
+      comp.y += cdy * 110 * dt;
+      comp.dir = Math.abs(cdx) > Math.abs(cdy) ? (cdx > 0 ? 'right' : 'left') : (cdy > 0 ? 'down' : 'up');
+      comp.animTimer += dt * 7;
+      comp.frame = [0, 1, 2, 1][Math.floor(comp.animTimer) % 4];
+    } else {
+      comp.frame = 1;
+    }
+    // Update Party Dist HUD
+    const pdistEl = document.getElementById(`pm-dist-${idx + 1}`);
+    if (pdistEl) pdistEl.textContent = `${Math.round(dist / 10)}m`;
+  });
+
+  // Projectiles
+  projectiles.forEach((p, i) => {
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.life -= dt;
+    enemies.forEach(e => {
+      if (e.hp > 0 && Math.hypot(p.x - e.x, p.y - e.y) < 26) {
+        damageEnemy(e, p.dmg, p.vx, p.vy);
+        p.life = 0;
+      }
+    });
+    if (checkCollision(p.x, p.y, 6)) p.life = 0;
+  });
+  projectiles = projectiles.filter(p => p.life > 0);
+
+  // Particles
+  particles.forEach(pt => {
+    pt.x += pt.vx * dt;
+    pt.y += pt.vy * dt;
+    pt.life -= dt;
+  });
+  particles = particles.filter(pt => pt.life > 0);
+
+  // Enemies AI
+  enemies.forEach(e => {
+    if (e.hp <= 0) return;
+    const dist = Math.hypot(player.x - e.x, player.y - e.y);
+    if (dist < 200) {
+      const dx = (player.x - e.x) / dist;
+      const dy = (player.y - e.y) / dist;
+      e.dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
+
+      if (dist > 26) {
+        e.x += dx * e.speed * dt;
+        e.y += dy * e.speed * dt;
+      } else if (player.invulnTimer <= 0) {
+        const actDmg = Math.max(1, e.dmg - hero.def);
+        player.hp -= actDmg;
+        player.invulnTimer = 0.55;
+        playSfx('slash');
+        damageNumbers.push({ text: `-${actDmg}`, x: player.x, y: player.y - 15, color: '#ef4444', life: 0.8 });
+        if (player.hp <= 0) {
+          player.dead = true;
+          player.hp = 0;
+          addChatMessage('mvp', `💀 You fell in battle! Press [Revive] to rise again.`);
+        }
+      }
+      e.animTimer += dt * 6;
+      e.frame = [0, 1, 2, 1][Math.floor(e.animTimer) % 4];
+    }
+  });
+
+  // Pickups
+  pickups.forEach((pk, i) => {
+    if (Math.hypot(player.x - pk.x, player.y - pk.y) < 24) {
+      if (pk.type === 'hp') {
+        player.hp = Math.min(player.maxHp, player.hp + 45);
+        damageNumbers.push({ text: `+45 HP`, x: player.x, y: player.y - 15, color: '#34d399', life: 0.8 });
+      } else {
+        player.mp = Math.min(player.maxMp, player.mp + 40);
+        damageNumbers.push({ text: `+40 MP`, x: player.x, y: player.y - 15, color: '#38bdf8', life: 0.8 });
+      }
+      playSfx('coin');
+      pickups.splice(i, 1);
+    }
+  });
+
+  // Floating text
+  damageNumbers.forEach(d => {
+    d.y -= 25 * dt;
+    d.life -= dt;
+  });
+  damageNumbers = damageNumbers.filter(d => d.life > 0);
+
+  // Update HUD Vitals
+  updateHUDVitals();
+}
+
+function updateHUDVitals() {
+  const hpPct = (player.hp / player.maxHp) * 100;
+  const mpPct = (player.mp / player.maxMp) * 100;
+  const expPct = (player.xp / player.xpNeeded) * 100;
+  const jobExpPct = (player.jobXp / player.jobXpNeeded) * 100;
+
+  document.getElementById('hud-lvl-badge').textContent = `Lv. ${player.level}`;
+  document.getElementById('hud-hp-bar').style.width = hpPct + '%';
+  document.getElementById('hud-hp-text').textContent = `HP ${Math.round(player.hp)} / ${player.maxHp}`;
+  document.getElementById('hud-mp-bar').style.width = mpPct + '%';
+  document.getElementById('hud-mp-text').textContent = `MP ${Math.round(player.mp)} / ${player.maxMp}`;
+  document.getElementById('hud-exp-bar').style.width = expPct + '%';
+  document.getElementById('hud-jobexp-bar').style.width = jobExpPct + '%';
+
+  // Mini summary
+  document.getElementById('coords-text').textContent = `${Math.round(player.x)}, ${Math.round(player.y)}`;
+  document.getElementById('inv-gold-val').textContent = `${player.gold} G`;
+
+  // Party HP bars
+  document.getElementById('pm-hp-0').style.width = hpPct + '%';
+  document.getElementById('pm-mp-0').style.width = mpPct + '%';
+}
+
+function render() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const camX = Math.round(canvas.width / 2 - player.x);
+  const camY = Math.round(canvas.height / 2 - player.y);
+
+  ctx.save();
+  ctx.translate(camX, camY);
+
+  const tilesetImg = images.tileset;
+
+  // Ground Layer
+  for (let ty = 0; ty < MAP_H; ty++) {
+    for (let tx = 0; tx < MAP_W; tx++) {
+      let sx = 0, sy = 0;
+      // Central Plaza Stone Pavement
+      if (tx >= 10 && tx <= 16 && ty >= 7 && ty <= 12) {
+        sx = 96; sy = 0; // Town square stone
+      } else if (tx > 28 && ty > 18) {
+        sx = 96; sy = 0; // Dungeon stone
+      } else if ((tx < 8 && ty < 8) || (tx >= 20 && tx <= 24 && ty >= 4 && ty <= 8)) {
+        sx = 160; sy = 0; // Water
+      } else if ((tx + ty) % 7 === 0) {
+        sx = 32; sy = 0; // Flower grass
+      } else if (tx % 6 === 0 || ty % 7 === 0) {
+        sx = 64; sy = 0; // Path
+      } else {
+        sx = 0; sy = 0; // Grass
+      }
+      if (tilesetImg.complete) {
+        ctx.drawImage(tilesetImg, sx, sy, 32, 32, tx * 32, ty * 32, 32, 32);
+      }
+    }
+  }
+
+  // Central Fountain in Plaza (x: 400, y: 300)
+  ctx.fillStyle = 'rgba(56, 189, 248, 0.4)';
+  ctx.beginPath();
+  ctx.arc(400, 300, 24, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = '#38bdf8';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  ctx.fillStyle = '#ffffff';
+  ctx.font = '16px sans-serif';
+  ctx.fillText('⛲', 391, 306);
+
+  // Walls & Trees
+  walls.forEach(w => {
+    if (tilesetImg.complete) {
+      const sx = w.type === 'tree' ? 192 : 128;
+      ctx.drawImage(tilesetImg, sx, 0, 32, 32, w.x, w.y, 32, 32);
+    }
+  });
+
+  // Treasure Chests
+  chests.forEach(c => {
+    if (tilesetImg.complete) {
+      const sx = c.opened ? 0 : 224;
+      const sy = c.opened ? 32 : 0;
+      ctx.drawImage(tilesetImg, sx, sy, 32, 32, c.x - 16, c.y - 16, 32, 32);
+    }
+  });
+
+  // Pickups
+  pickups.forEach(p => {
+    const img = p.type === 'hp' ? images.potion_hp : images.potion_mp;
+    if (img && img.complete) {
+      ctx.drawImage(img, p.x - 16, p.y - 16 + Math.sin(performance.now() * 0.006) * 4, 32, 32);
+    }
+  });
+
+  // NPCs
+  const dirRows = { down: 0, left: 1, right: 2, up: 3 };
+  npcs.forEach(n => {
+    const spr = images[n.sprite];
+    if (spr && spr.complete) {
+      ctx.drawImage(spr, 32, 0, 32, 32, Math.round(n.x - 16), Math.round(n.y - 16), 32, 32);
+    }
+    // NPC Name
+    ctx.font = 'bold 11px sans-serif';
+    ctx.fillStyle = '#fde047';
+    ctx.textAlign = 'center';
+    ctx.fillText(`[${n.role}]`, n.x, n.y - 28);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(n.name, n.x, n.y - 16);
+    ctx.textAlign = 'left';
+  });
+
+  // Party Companions
+  companions.forEach(c => {
+    const spr = images[c.sprite];
+    if (spr && spr.complete) {
+      const row = dirRows[c.dir] || 0;
+      ctx.drawImage(spr, c.frame * 32, row * 32, 32, 32, Math.round(c.x - 16), Math.round(c.y - 16), 32, 32);
+    }
+    // Companion Name
+    ctx.font = 'bold 10px sans-serif';
+    ctx.fillStyle = '#86efac';
+    ctx.textAlign = 'center';
+    ctx.fillText(c.name, c.x, c.y - 20);
+    ctx.textAlign = 'left';
+  });
+
+  // Enemies
+  enemies.forEach(e => {
+    if (e.hp <= 0) return;
+    const spr = images[e.type];
+    if (spr && spr.complete) {
+      const row = dirRows[e.dir] || 0;
+      const sz = e.isMvp ? 48 : 32;
+      ctx.drawImage(spr, e.frame * 32, row * 32, 32, 32, Math.round(e.x - sz/2), Math.round(e.y - sz/2), sz, sz);
+
+      // Monster HP Bar & MVP Icon
+      ctx.fillStyle = 'rgba(0,0,0,0.7)';
+      ctx.fillRect(e.x - 18, e.y - sz/2 - 10, 36, 5);
+      ctx.fillStyle = e.isMvp ? '#f43f5e' : '#ef4444';
+      ctx.fillRect(e.x - 17, e.y - sz/2 - 9, 34 * (e.hp / e.maxHp), 3);
+
+      if (e.isMvp) {
+        ctx.font = 'bold 12px sans-serif';
+        ctx.fillStyle = '#fbbf24';
+        ctx.textAlign = 'center';
+        ctx.fillText('👑 MVP', e.x, e.y - sz/2 - 14);
+        ctx.textAlign = 'left';
+      }
+    }
+  });
+
+  // Projectiles
+  projectiles.forEach(p => {
+    const img = p.type === 'fireball' ? images.fireball : images.holy;
+    if (img && img.complete) {
+      ctx.drawImage(img, p.x - 16, p.y - 16, 32, 32);
+    }
+  });
+
+  // Particles
+  particles.forEach(pt => {
+    ctx.fillStyle = pt.color;
+    ctx.beginPath();
+    ctx.arc(pt.x, pt.y, pt.size, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // Player
+  const hero = HERO_DATA[heroIdx];
+  const charImg = images[hero.sprite];
+  if (charImg && charImg.complete) {
+    const row = dirRows[player.dir] || 0;
+    if (player.invulnTimer > 0 && Math.floor(player.invulnTimer * 20) % 2 === 0) {
+      ctx.globalAlpha = 0.5;
+    }
+    ctx.drawImage(charImg, player.frame * 32, row * 32, 32, 32, Math.round(player.x - 16), Math.round(player.y - 16), 32, 32);
+    ctx.globalAlpha = 1.0;
+  }
+
+  // Player Name Tag & Guild
+  ctx.font = 'bold 11px sans-serif';
+  ctx.fillStyle = '#fbbf24';
+  ctx.textAlign = 'center';
+  ctx.fillText('⭐ Siegfried', player.x, player.y - 24);
+  ctx.font = '9px sans-serif';
+  ctx.fillStyle = '#38bdf8';
+  ctx.fillText('<Valkyrie Vanguard>', player.x, player.y - 14);
+
+  // Overhead Animated Emote Pop
+  if (player.emoteTimer > 0 && player.activeEmote) {
+    ctx.font = '22px sans-serif';
+    ctx.fillText(player.activeEmote, player.x, player.y - 42);
+  }
+
+  // Overhead Speech Bubble
+  if (player.speechTimer > 0 && player.speechBubble) {
+    ctx.font = '11px sans-serif';
+    const textWidth = ctx.measureText(player.speechBubble).width;
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+    ctx.strokeStyle = '#38bdf8';
+    ctx.beginPath();
+    ctx.roundRect(player.x - textWidth / 2 - 8, player.y - 52, textWidth + 16, 20, 6);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(player.speechBubble, player.x, player.y - 38);
+  }
+
+  // Damage Numbers
+  damageNumbers.forEach(d => {
+    ctx.font = 'bold 13px monospace';
+    ctx.fillStyle = '#000000';
+    ctx.fillText(d.text, d.x + 1, d.y + 1);
+    ctx.fillStyle = d.color;
+    ctx.fillText(d.text, d.x, d.y);
+  });
+  ctx.textAlign = 'left';
+
+  ctx.restore();
+
+  // Render Minimap Radar
+  renderMinimap();
+}
+
+function renderMinimap() {
+  mmCtx.clearRect(0, 0, minimapCanvas.width, minimapCanvas.height);
+
+  const scale = minimapCanvas.width / (MAP_W * TILE_SZ);
+  // Base map background
+  mmCtx.fillStyle = '#0f172a';
+  mmCtx.fillRect(0, 0, minimapCanvas.width, minimapCanvas.height);
+
+  // Fountain
+  mmCtx.fillStyle = '#38bdf8';
+  mmCtx.beginPath();
+  mmCtx.arc(400 * scale, 300 * scale, 3, 0, Math.PI * 2);
+  mmCtx.fill();
+
+  // NPCs (Yellow dots)
+  mmCtx.fillStyle = '#fbbf24';
+  npcs.forEach(n => {
+    mmCtx.beginPath();
+    mmCtx.arc(n.x * scale, n.y * scale, 2.5, 0, Math.PI * 2);
+    mmCtx.fill();
+  });
+
+  // Party members (Green dots)
+  mmCtx.fillStyle = '#34d399';
+  companions.forEach(c => {
+    mmCtx.beginPath();
+    mmCtx.arc(c.x * scale, c.y * scale, 2.5, 0, Math.PI * 2);
+    mmCtx.fill();
+  });
+
+  // Monsters (Red dots & MVP Boss)
+  enemies.forEach(e => {
+    if (e.hp > 0) {
+      if (e.isMvp) {
+        mmCtx.fillStyle = '#f43f5e';
+        mmCtx.beginPath();
+        mmCtx.arc(e.x * scale, e.y * scale, 5, 0, Math.PI * 2);
+        mmCtx.fill();
+      } else {
+        mmCtx.fillStyle = '#ef4444';
+        mmCtx.beginPath();
+        mmCtx.arc(e.x * scale, e.y * scale, 2, 0, Math.PI * 2);
+        mmCtx.fill();
+      }
+    }
+  });
+
+  // Player (Bright Gold arrow / blip)
+  mmCtx.fillStyle = '#fbbf24';
+  mmCtx.strokeStyle = '#ffffff';
+  mmCtx.lineWidth = 1.5;
+  mmCtx.beginPath();
+  mmCtx.arc(player.x * scale, player.y * scale, 3.5, 0, Math.PI * 2);
+  mmCtx.fill();
+  mmCtx.stroke();
+}
+
+function gameLoop(now) {
+  const dt = Math.min(0.1, (now - lastTime) / 1000.0);
+  lastTime = now;
+  update(dt);
+  render();
+  requestAnimationFrame(gameLoop);
+}
+
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>
